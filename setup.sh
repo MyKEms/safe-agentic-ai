@@ -86,17 +86,30 @@ AGENT_PROVIDER="none"
 case "$AGENT_CHOICE" in
   1)
     AGENT_PROVIDER="1password"
+    echo ""
+    echo -e "  ${D}Make sure SSH agent is enabled in 1Password:${N}"
+    echo -e "  ${D}  1Password -> Settings -> Developer -> 'Use the SSH Agent' (toggle ON)${N}"
+    echo -e "  ${D}  Recommended: also enable 'Ask approval for each new application'${N}"
+    echo -e "  ${D}  for biometric confirmation on each key use.${N}"
+    echo ""
     case "$PLATFORM" in
       macos)
         SSH_SOCK_DEFAULT="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
         ;;
       windows)
         SSH_SOCK_DEFAULT="/run/host-services/ssh-auth.sock"
+        echo -e "  ${D}Windows: also enable Docker Desktop -> Settings -> Resources -> WSL Integration${N}"
+        echo ""
         ;;
       linux)
         SSH_SOCK_DEFAULT="$HOME/.1password/agent.sock"
         ;;
     esac
+    if [ -e "$SSH_SOCK_DEFAULT" ]; then
+      echo -e "  ${G}Socket found at default path.${N}"
+    else
+      echo -e "  ${Y}Socket not found at default path — is the SSH agent enabled?${N}"
+    fi
     read -rp "  1Password socket [$SSH_SOCK_DEFAULT]: " SSH_SOCK_INPUT
     SSH_SOCK="${SSH_SOCK_INPUT:-$SSH_SOCK_DEFAULT}"
     ;;
@@ -104,14 +117,22 @@ case "$AGENT_CHOICE" in
     AGENT_PROVIDER="keeper"
     echo ""
     echo -e "  ${D}Keeper PAM uses email-based socket: ~/.keeper/<email>.ssh_agent${N}"
-    echo -e "  ${D}Start the agent first: keeper ssh-agent start${N}"
-    echo -e "  ${D}Docs: https://docs.keeper.io/en/keeperpam/commander-cli/command-reference/connection-commands/ssh-agent${N}"
+    echo -e "  ${D}Prerequisites:${N}"
+    echo -e "  ${D}  1. Install Keeper Commander CLI: pip install keepercommander${N}"
+    echo -e "  ${D}  2. Start the agent: keeper ssh-agent start${N}"
+    echo -e "  ${D}  3. The agent loads SSH keys from your Keeper Vault automatically${N}"
+    echo -e "  ${D}  Docs: https://docs.keeper.io/en/keeperpam/commander-cli/command-reference/connection-commands/ssh-agent${N}"
     echo ""
     read -rp "  Your Keeper account email: " KEEPER_EMAIL
     if [ -n "$KEEPER_EMAIL" ]; then
       SSH_SOCK_DEFAULT="$HOME/.keeper/${KEEPER_EMAIL}.ssh_agent"
     else
       SSH_SOCK_DEFAULT=""
+    fi
+    if [ -n "$SSH_SOCK_DEFAULT" ] && [ -e "$SSH_SOCK_DEFAULT" ]; then
+      echo -e "  ${G}Socket found at default path.${N}"
+    elif [ -n "$SSH_SOCK_DEFAULT" ]; then
+      echo -e "  ${Y}Socket not found — have you run 'keeper ssh-agent start'?${N}"
     fi
     read -rp "  Keeper socket [$SSH_SOCK_DEFAULT]: " SSH_SOCK_INPUT
     SSH_SOCK="${SSH_SOCK_INPUT:-$SSH_SOCK_DEFAULT}"
