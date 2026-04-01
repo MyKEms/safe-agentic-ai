@@ -44,11 +44,11 @@ cd safe-agentic-ai
 # 2. Run the setup wizard (auto-detects platform, generates .env)
 ./setup.sh
 
-# 3. Authenticate Claude on your host
-claude login
-
-# 4. Open in VS Code → Cmd/Ctrl+Shift+P → "Dev Containers: Reopen in Container"
+# 3. Open in VS Code → Cmd/Ctrl+Shift+P → "Dev Containers: Reopen in Container"
 code .
+
+# Optional: if Claude CLI auth fails inside the container, run on host first:
+# claude login
 ```
 
 That's it. You're inside an isolated environment with Claude CLI ready to go.
