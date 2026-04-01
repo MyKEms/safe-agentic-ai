@@ -43,22 +43,53 @@ This means `--dangerously-skip-permissions` is safe to use: the agent has freedo
 
 ## Quick Start
 
+**Step 1 — Clone and configure:**
+
 ```bash
-# 1. Clone
 git clone https://github.com/MyKEms/safe-agentic-ai.git
 cd safe-agentic-ai
-
-# 2. Run the setup wizard (auto-detects platform, generates .env)
 ./setup.sh
-
-# 3. Open in VS Code → Cmd/Ctrl+Shift+P → "Dev Containers: Reopen in Container"
-code .
-
-# Optional: if Claude CLI auth fails inside the container, run on host first:
-# claude login
 ```
 
-That's it. You're inside an isolated environment with Claude CLI ready to go.
+**Step 2 — Open in VS Code:**
+
+```bash
+code .
+```
+
+Then: `Cmd+Shift+P` (macOS) or `Ctrl+Shift+P` (Windows) → type **"Dev Containers: Reopen in Container"** → Enter.
+
+Wait for the build to finish (first time takes ~2 minutes, subsequent starts are instant).
+
+**Step 3 — Open a terminal inside the container:**
+
+VS Code will show several terminal tabs at the bottom (Configuring..., Dev Containers). **Ignore those** — they are build logs.
+
+Click the **`+`** button in the terminal panel to open a new terminal. You're now inside the container at `/workspace`.
+
+**Step 4 — Start Claude:**
+
+```bash
+ccd
+```
+
+This launches Claude CLI in autonomous mode (`--dangerously-skip-permissions` — safe because you're inside the isolated container).
+
+On first run, Claude will ask you to authenticate. Follow the browser link, paste the code back. Your token is stored in `~/.claude` (shared from host) and persists across restarts.
+
+**Step 5 — Switch to the best model:**
+
+Inside Claude CLI, type:
+
+```
+/model
+```
+
+Select **Opus** (usually the default), then press the **right arrow key** to set effort to **MAX**.
+
+You're ready. Start prompting.
+
+> **Tip:** If Claude auth fails from inside the container (browser redirect doesn't work), run `claude login` on your **host machine** first — the token is shared via the mount.
 
 ## What's Inside
 
