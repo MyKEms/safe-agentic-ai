@@ -27,6 +27,7 @@
     }
   },
 
+  "initializeCommand": "bash scripts/preflight.sh",
   "postCreateCommand": "bash /scripts/setup-container.sh",
   "postStartCommand": "bash /scripts/welcome.sh",
 
