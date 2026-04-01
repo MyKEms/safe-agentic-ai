@@ -184,8 +184,28 @@ CPUS="${CPU_INPUT:-$CPUS_DEFAULT}"
 echo ""
 
 # ─── Git signing ────────────────────────────────────────────────────────────
-echo -e "${B}  Git Signing Key${N} (optional — path inside container)"
-echo "  Leave empty to skip commit signing."
+echo -e "${B}  Git Commit Signing${N} (optional)"
+echo ""
+echo -e "  ${D}Signs your git commits with an SSH key so GitHub shows them as 'Verified'.${N}"
+echo -e "  ${D}Your ~/.ssh is mounted read-only into the container at /home/vscode/.ssh/${N}"
+echo -e "  ${D}Point this to the PUBLIC key (.pub) inside the container.${N}"
+echo ""
+echo -e "  ${D}Examples:${N}"
+echo -e "  ${D}  /home/vscode/.ssh/id_ed25519.pub       (if you have ed25519 key)${N}"
+echo -e "  ${D}  /home/vscode/.ssh/id_rsa.pub            (if you have RSA key)${N}"
+echo ""
+echo -e "  ${D}To check which keys you have: ls ~/.ssh/*.pub${N}"
+echo -e "  ${D}Leave empty to skip — commits will work but won't show as 'Verified'.${N}"
+echo ""
+
+# Show available public keys as hints
+PUB_KEYS=$(ls "$SSH_PATH"/*.pub 2>/dev/null | while read f; do echo "  /home/vscode/.ssh/$(basename "$f")"; done)
+if [ -n "$PUB_KEYS" ]; then
+  echo -e "  ${G}Public keys found on your machine:${N}"
+  echo "$PUB_KEYS"
+  echo ""
+fi
+
 read -rp "  SSH signing key []: " SIGNING_KEY
 echo ""
 
