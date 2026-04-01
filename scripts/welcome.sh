@@ -15,7 +15,7 @@ N="\033[0m"
 # ─── Fix ownership & permissions ────────────────────────────────────────────
 sudo chown -R vscode:vscode /home/vscode/.claude 2>/dev/null
 sudo chown -R vscode:vscode /home/vscode/.cache 2>/dev/null
-sudo chmod 777 /home/vscode/.ssh/agent.sock 2>/dev/null
+sudo chmod 777 /home/vscode/.ssh-agent/agent.sock 2>/dev/null || true
 
 # ─── Banner ─────────────────────────────────────────────────────────────────
 echo ""

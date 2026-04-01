@@ -59,7 +59,7 @@ Three providers supported via `setup.sh`:
 2. **Keeper PAM** — email-based socket (`~/.keeper/<email>.ssh_agent`)
 3. **Custom** — any Unix socket path
 
-The socket is mounted to `/home/vscode/.ssh/agent.sock` inside the container regardless of provider.
+The socket is mounted to `/home/vscode/.ssh-agent/agent.sock` inside the container regardless of provider. This is a separate directory from `.ssh` (which is mounted read-only from the host) to avoid mount conflicts.
 
 ## Cross-Platform
 

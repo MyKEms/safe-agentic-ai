@@ -60,7 +60,7 @@ services:
       # --- Claude OAuth tokens (read-write for refresh) ---
       - ${CLAUDE_CONFIG_PATH}:/home/vscode/.claude
       # --- SSH agent socket (1Password, Keeper, or custom) ---
-      - ${SSH_AGENT_SOCK_HOST:-/dev/null}:/home/vscode/.ssh/agent.sock
+      - ${SSH_AGENT_SOCK_HOST:-/dev/null}:/home/vscode/.ssh-agent/agent.sock
       # --- SSH keys (read-only) ---
       - ${SSH_HOST_PATH}:/home/vscode/.ssh:ro
       # --- Scripts (read-only) ---
@@ -73,7 +73,7 @@ services:
         tmpfs:
           size: ${TMP_SIZE:-536870912}
     environment:
-      SSH_AUTH_SOCK: /home/vscode/.ssh/agent.sock
+      SSH_AUTH_SOCK: /home/vscode/.ssh-agent/agent.sock
       HTTP_PROXY: http://proxy:3128
       HTTPS_PROXY: http://proxy:3128
       NO_PROXY: localhost,127.0.0.1
