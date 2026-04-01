@@ -94,7 +94,7 @@ Available inside the workspace container:
 
 ## Proxy Management
 
-Use `proxy-ctl.sh` to manage the domain allowlist without restarting containers:
+> **Run from the host**, not from inside the container. The script edits the allowlist file on the host and calls `docker compose` to reload the proxy.
 
 ```bash
 # List currently allowed domains
@@ -239,7 +239,7 @@ docker network inspect claude-net
 
 **Domain blocked (HTTP 403 from proxy)**
 
-The domain isn't in `proxy/allowed-domains.txt`. Add it:
+The domain isn't in `proxy/allowed-domains.txt`. Add it **from the host** (not from inside the container):
 
 ```bash
 ./scripts/proxy-ctl.sh add .the-domain.com

@@ -72,5 +72,7 @@ The socket is mounted to `/home/vscode/.ssh/agent.sock` inside the container reg
 - Do not add hardcoded paths, emails, or credentials — use .env variables
 - Do not add company-specific or personal domains to allowed-domains.txt — keep the "ADD YOUR DOMAINS" section for users
 - Test changes on both macOS and Windows if touching docker-compose.yml or setup.sh
-- Scripts run in two contexts: `preflight.sh` and `setup.sh` run on the **host**; everything else runs **inside the container**
-- The `proxy-ctl.sh` script runs on the host but operates on the container via `docker compose`
+- Scripts run in two contexts — always check which side before editing:
+  - **Host-side:** `setup.sh`, `preflight.sh`, `proxy-ctl.sh`, `monitor.sh`, `wipe.sh` — these call `docker compose` and edit host files
+  - **Container-side:** `setup-container.sh`, `welcome.sh`, `watchdog.sh` — these run inside the workspace via devcontainer lifecycle hooks or aliases
+- `proxy-ctl.sh` **cannot** run from inside the container — it edits `allowed-domains.txt` on the host and calls `docker compose restart`
