@@ -7,6 +7,7 @@ set -euo pipefail
 echo "=== Safe Agentic AI — Container Setup ==="
 
 # ─── Fix ownership ──────────────────────────────────────────────────────────
+sudo chown -R vscode:vscode /home/vscode/.claude 2>/dev/null || true
 sudo chown -R vscode:vscode /home/vscode/.cache 2>/dev/null || true
 
 # ─── Git config ────────────────────────────────────────────────────────────

@@ -60,8 +60,10 @@ services:
     volumes:
       # --- Your repos (read-write) ---
       - ${WORKSPACE_PATH}:/workspace:cached
-      # --- Claude CLI config (persistent volume — survives rebuilds) ---
-      - claude-config:/home/vscode/.claude
+      # --- Claude CLI config (shared from host for auth) ---
+      # Login on host with: claude login
+      # Token is shared via this mount (~24h expiry, re-login on host when needed)
+      - ${CLAUDE_CONFIG_PATH:-~/.claude}:/home/vscode/.claude
       # --- SSH agent socket (1Password, Keeper, or custom) ---
       # Long-form syntax required — 1Password path contains spaces
       - type: bind
@@ -125,5 +127,4 @@ networks:
 # --------------------------------------------------------
 volumes:
   squid-cache:
-  claude-config:
   claude-cache:

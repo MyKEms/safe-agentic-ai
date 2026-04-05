@@ -103,7 +103,7 @@ Select **Opus** (usually the default), then press the **right arrow key** to set
 
 You're ready. Start prompting.
 
-> **Tip:** Claude credentials are stored in a Docker volume and persist across rebuilds. You only need to `claude login` once per project. A hard wipe (`wipe.sh --hard`) destroys volumes — you'll need to re-authenticate after that.
+> **Tip:** Claude auth is shared from your host's `~/.claude`. Run `claude login` on your **host machine** — the token is mounted into the container. Tokens expire ~24h; re-run on host when needed.
 
 ## Template vs Project
 
@@ -230,7 +230,7 @@ Three levels of cleanup via `wipe.sh`:
 claude login
 ```
 
-Follow the browser flow. The token is stored in a Docker volume and survives container rebuilds.
+Or run `claude login` on your **host machine** — the token is shared into the container via mount.
 
 **API key fallback:**
 

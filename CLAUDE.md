@@ -49,7 +49,7 @@ Host machine
 
 - All sensitive values (API keys, paths, git identity) live in `.env`, never hardcoded
 - `.env` is gitignored — never committed
-- Claude CLI credentials are stored in a Docker volume (`claude-config`), not mounted from host
+- Claude CLI credentials are shared from host `~/.claude` via bind mount (login on host, token auto-shared)
 - Scripts in `scripts/` are mounted read-only into the container
 - Proxy config is mounted read-only
 - SSH keys are mounted read-only; SSH agent socket is the preferred method

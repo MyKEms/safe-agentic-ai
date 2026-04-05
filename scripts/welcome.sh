@@ -13,6 +13,7 @@ C="\033[36m"
 N="\033[0m"
 
 # ─── Fix ownership & permissions ────────────────────────────────────────────
+sudo chown -R vscode:vscode /home/vscode/.claude 2>/dev/null
 sudo chown -R vscode:vscode /home/vscode/.cache 2>/dev/null
 sudo chmod 777 /home/vscode/.ssh-agent/agent.sock 2>/dev/null || true
 
@@ -89,6 +90,7 @@ echo -e "  ${Y}Open a new terminal (+) or click the 'bash' tab to start.${N}"
 echo -e "  ${D}The 'Configuring...' and 'Dev Containers' tabs are just logs.${N}"
 echo ""
 echo -e "  ${B}From host:${N}"
+echo -e "    ${D}claude login${N}                Auth (token shared via mount)"
 echo -e "    ${D}./scripts/monitor.sh --loop${N}  Live dashboard"
 echo -e "    ${D}./scripts/wipe.sh${N}           Clean reset"
 echo -e "${D}  ─────────────────────────────────────────────${N}"
