@@ -114,7 +114,7 @@ echo -e "  Containers will be: ${C}${PROJECT_NAME}-workspace${N}, ${C}${PROJECT_
 echo ""
 
 # ─── Platform-specific defaults ─────────────────────────��───────────────────
-WORKSPACE_DEFAULT="$HOME/GIT"
+WORKSPACE_DEFAULT="$(pwd)/workspace"
 SSH_PATH_DEFAULT="$HOME/.ssh"
 CLAUDE_PATH_DEFAULT="$HOME/.claude"
 
