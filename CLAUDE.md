@@ -60,11 +60,10 @@ Host machine
 
 ## 1Password CLI Support
 
-The `op` CLI is installed in the container image. Two auth methods:
-1. **App integration** (biometric) — mount the host's 1Password CLI socket via `OP_CLI_SOCK_HOST` in `.env`. The socket is mapped to `/home/vscode/.op/agent.sock` and `setup-container.sh` configures `app_integrated: true` automatically.
-2. **Service account token** — set `OP_SERVICE_ACCOUNT_TOKEN` in `.env`. No socket needed.
+The `op` CLI is installed in the container image. 1Password desktop app integration (biometric) does **not** work cross-platform (macOS host → Linux container). Two working approaches:
 
-Usage inside the container: `op run --env-file=.env.tpl -- command` (where `.env.tpl` contains `op://` references)
+1. **Service account token** — set `OP_SERVICE_ACCOUNT_TOKEN` in `.env`. Best for automation. Usage: `op run --env-file=.env.tpl -- command`
+2. **Resolve on host** — run `op read "op://vault/item/field"` on your host (biometric triggers there), pass values as env vars into the container.
 
 ## SSH Agent Support
 

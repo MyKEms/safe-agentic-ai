@@ -46,17 +46,10 @@ fi
 # 1Password CLI
 echo -e -n "  ${B}1Password:${N}  "
 if command -v op &>/dev/null; then
-  if [ -S /home/vscode/.op/agent.sock ]; then
-    OP_EMAIL=$(op whoami --format=json 2>/dev/null | jq -r '.email // empty' 2>/dev/null)
-    if [ -n "$OP_EMAIL" ]; then
-      echo -e "${G}connected${N} ($OP_EMAIL)"
-    else
-      echo -e "${Y}socket mounted, not signed in on host${N}"
-    fi
-  elif [ -n "${OP_SERVICE_ACCOUNT_TOKEN:-}" ]; then
+  if [ -n "${OP_SERVICE_ACCOUNT_TOKEN:-}" ]; then
     echo -e "${G}service account${N}"
   else
-    echo -e "${D}not configured (no socket or token)${N}"
+    echo -e "${D}installed (set OP_SERVICE_ACCOUNT_TOKEN or use 'op read' on host)${N}"
   fi
 else
   echo -e "${D}not installed${N}"

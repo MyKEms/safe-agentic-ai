@@ -161,7 +161,6 @@ read -rp "  Choice [1]: " AGENT_CHOICE
 AGENT_CHOICE="${AGENT_CHOICE:-1}"
 
 SSH_SOCK=""
-OP_CLI_SOCK=""
 AGENT_PROVIDER="none"
 
 case "$AGENT_CHOICE" in
@@ -194,29 +193,11 @@ case "$AGENT_CHOICE" in
     read -rp "  1Password socket [$SSH_SOCK_DEFAULT]: " SSH_SOCK_INPUT
     SSH_SOCK="${SSH_SOCK_INPUT:-$SSH_SOCK_DEFAULT}"
 
-    # Auto-detect 1Password CLI socket (for op run / vault access)
     echo ""
-    echo -e "  ${D}1Password CLI integration (for 'op run', 'op read' inside container):${N}"
-    echo -e "  ${D}  1Password -> Settings -> Developer -> 'Connect with 1Password CLI' (toggle ON)${N}"
-    echo ""
-    case "$PLATFORM" in
-      macos)
-        OP_CLI_SOCK_DEFAULT="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/s.sock"
-        ;;
-      linux)
-        OP_CLI_SOCK_DEFAULT="$HOME/.1password/op-cli.sock"
-        ;;
-      *)
-        OP_CLI_SOCK_DEFAULT=""
-        ;;
-    esac
-    if [ -n "$OP_CLI_SOCK_DEFAULT" ] && [ -e "$OP_CLI_SOCK_DEFAULT" ]; then
-      echo -e "  ${G}1Password CLI socket found.${N}"
-    elif [ -n "$OP_CLI_SOCK_DEFAULT" ]; then
-      echo -e "  ${Y}CLI socket not found — is 'Connect with 1Password CLI' enabled?${N}"
-    fi
-    read -rp "  1Password CLI socket [$OP_CLI_SOCK_DEFAULT]: " OP_CLI_SOCK_INPUT
-    OP_CLI_SOCK="${OP_CLI_SOCK_INPUT:-$OP_CLI_SOCK_DEFAULT}"
+    echo -e "  ${D}1Password CLI ('op') is also installed in the container.${N}"
+    echo -e "  ${D}App integration (biometric) does not work cross-platform in Docker.${N}"
+    echo -e "  ${D}To use 'op' inside the container, set OP_SERVICE_ACCOUNT_TOKEN in .env${N}"
+    echo -e "  ${D}or resolve secrets on host with 'op read' and pass as env vars.${N}"
     ;;
   2)
     AGENT_PROVIDER="keeper"
@@ -335,9 +316,6 @@ GIT_USER_EMAIL=$GIT_EMAIL
 # SSH Agent
 SSH_AGENT_PROVIDER=$AGENT_PROVIDER
 SSH_AGENT_SOCK_HOST=$SSH_SOCK
-
-# 1Password CLI (op) — app integration socket for biometric auth
-OP_CLI_SOCK_HOST=$OP_CLI_SOCK
 
 # Paths
 WORKSPACE_PATH=$WORKSPACE

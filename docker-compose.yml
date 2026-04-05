@@ -69,10 +69,9 @@ services:
       - type: bind
         source: ${SSH_AGENT_SOCK_HOST:-/dev/null}
         target: /home/vscode/.ssh-agent/agent.sock
-      # --- 1Password CLI socket (biometric auth from host) ---
-      - type: bind
-        source: ${OP_CLI_SOCK_HOST:-/dev/null}
-        target: /home/vscode/.op/agent.sock
+      # --- 1Password CLI ---
+      # App integration socket doesn't work cross-platform (macOS → Linux).
+      # Use OP_SERVICE_ACCOUNT_TOKEN in .env instead.
       # --- SSH keys (read-only) ---
       - ${SSH_HOST_PATH}:/home/vscode/.ssh:ro
       # --- Scripts (read-only) ---

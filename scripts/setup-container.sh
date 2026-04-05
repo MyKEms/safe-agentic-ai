@@ -36,18 +36,15 @@ else
   echo "  Git signing: disabled (no SSH_SIGNING_KEY or key not found)"
 fi
 
-# ─── 1Password CLI (app integration via mounted socket) ──────────────────
-OP_SOCK="/home/vscode/.op/agent.sock"
-if [ -S "$OP_SOCK" ]; then
-  mkdir -p /home/vscode/.config/op
-  cat > /home/vscode/.config/op/config << 'OPEOF'
-{"app_integrated": true}
-OPEOF
-  echo "  1Password CLI: configured (app integration via socket)"
-elif [ -n "${OP_SERVICE_ACCOUNT_TOKEN:-}" ]; then
+# ─── 1Password CLI ────────────────────────────────────────────────────────
+# Note: 1Password desktop app integration (socket mount) does not work
+# cross-platform (macOS host → Linux container). Use one of:
+#   - OP_SERVICE_ACCOUNT_TOKEN in .env (best for automation)
+#   - 'op read' on host to resolve secrets, pass as env vars
+if [ -n "${OP_SERVICE_ACCOUNT_TOKEN:-}" ]; then
   echo "  1Password CLI: configured (service account token)"
 else
-  echo "  1Password CLI: not configured (no socket or token)"
+  echo "  1Password CLI: installed (set OP_SERVICE_ACCOUNT_TOKEN or resolve on host)"
 fi
 
 # ─── MCP config (Playwright) ─────────────────────────────────────────────

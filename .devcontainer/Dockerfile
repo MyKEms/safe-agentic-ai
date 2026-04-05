@@ -63,7 +63,8 @@ RUN echo 'Acquire::http::Proxy "http://proxy:3128/";\nAcquire::https::Proxy "htt
 
 # --- Non-root user setup ---
 USER vscode
-RUN mkdir -p /home/vscode/.npm /home/vscode/.ssh-agent /home/vscode/.op
+RUN mkdir -p /home/vscode/.npm /home/vscode/.ssh-agent \
+    && mkdir -m 700 -p /home/vscode/.op
 
 # --- Shell aliases & environment ---
 RUN echo '\n\
