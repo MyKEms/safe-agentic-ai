@@ -74,6 +74,7 @@ if [ ! -f "$SCRIPT_DIR/.env" ] && [ "${1:-}" != "--configure" ]; then
   echo ""
 
   # Re-exec setup.sh in the new project folder
+  cd "$TARGET_DIR"
   exec bash "$TARGET_DIR/setup.sh" --configure
 fi
 
