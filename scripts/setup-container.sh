@@ -36,6 +36,20 @@ else
   echo "  Git signing: disabled (no SSH_SIGNING_KEY or key not found)"
 fi
 
+# ─── 1Password CLI (app integration via mounted socket) ──────────────────
+OP_SOCK="/home/vscode/.op/agent.sock"
+if [ -S "$OP_SOCK" ]; then
+  mkdir -p /home/vscode/.config/op
+  cat > /home/vscode/.config/op/config << 'OPEOF'
+{"app_integrated": true}
+OPEOF
+  echo "  1Password CLI: configured (app integration via socket)"
+elif [ -n "${OP_SERVICE_ACCOUNT_TOKEN:-}" ]; then
+  echo "  1Password CLI: configured (service account token)"
+else
+  echo "  1Password CLI: not configured (no socket or token)"
+fi
+
 # ─── MCP config (Playwright) ─────────────────────────────────────────────
 echo ""
 echo ">>> Checking MCP config..."
@@ -54,6 +68,27 @@ else
 }
 MCPEOF
   echo "    Created /workspace/.mcp.json"
+fi
+
+# ─── Claude CLI default permissions ──────────────────────────────────────
+CLAUDE_SETTINGS="/workspace/.claude/settings.local.json"
+if [ ! -f "$CLAUDE_SETTINGS" ]; then
+  echo ">>> Creating default Claude CLI permissions..."
+  mkdir -p /workspace/.claude
+  cat > "$CLAUDE_SETTINGS" << 'CLEOF'
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker exec:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker logs:*)"
+    ]
+  }
+}
+CLEOF
+  echo "    Created $CLAUDE_SETTINGS"
+else
+  echo ">>> Claude CLI permissions: $CLAUDE_SETTINGS (exists)"
 fi
 
 # ─── Verification ────────────────────────────────────────────────────────

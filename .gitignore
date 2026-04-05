@@ -1,7 +1,10 @@
 .env
+.claude/
 workspace/*
 !workspace/.gitkeep
 articles/
 *.log
 .DS_Store
 node_modules/
+__pycache__/
+*.pyc

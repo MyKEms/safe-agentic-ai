@@ -43,26 +43,31 @@ This means `--dangerously-skip-permissions` is safe to use: the agent has freedo
 
 ## Quick Start
 
-**Step 1 — Clone and configure:**
+**Step 1 — Clone the template (once):**
 
-macOS / Linux:
 ```bash
 git clone https://github.com/MyKEms/safe-agentic-ai.git
 cd safe-agentic-ai
-./setup.sh
+```
+
+**Step 2 — Create a project:**
+
+macOS / Linux:
+```bash
+./setup.sh ~/my-project-agent
 ```
 
 Windows (run from **Git Bash** or **WSL**, not PowerShell/CMD):
 ```bash
-git clone https://github.com/MyKEms/safe-agentic-ai.git
-cd safe-agentic-ai
-bash setup.sh
+bash setup.sh ~/my-project-agent
 ```
 
-**Step 2 — Open in VS Code:**
+This copies the template to a new folder, runs the configuration wizard, and initializes a git repo. Each project gets its own `.env`, proxy allowlist, and uniquely named containers.
+
+**Step 3 — Open the project in VS Code:**
 
 ```bash
-code .
+code ~/my-project-agent
 ```
 
 Then: `Cmd+Shift+P` (macOS) or `Ctrl+Shift+P` (Windows) → type **"Dev Containers: Reopen in Container"** → Enter.
@@ -98,6 +103,31 @@ Select **Opus** (usually the default), then press the **right arrow key** to set
 You're ready. Start prompting.
 
 > **Tip:** If Claude auth fails from inside the container (browser redirect doesn't work), run `claude login` on your **host machine** first — the token is shared via the mount.
+
+## Template vs Project
+
+This repo is a **template**. You never open it directly in VS Code Dev Containers. Instead, `setup.sh` creates a new project folder from it.
+
+```
+safe-agentic-ai/              ← template (keep clean, update with git pull)
+  └── setup.sh                ← creates project folders
+
+~/my-project-agent/           ← project #1 (has its own .env, containers, allowlist)
+~/another-project-agent/      ← project #2 (fully independent)
+```
+
+Each project gets:
+- Its own `.env` with credentials and paths
+- Its own `proxy/allowed-domains.txt` with project-specific domains
+- Uniquely named containers (`<name>-workspace`, `<name>-proxy`) so multiple projects run side by side
+- Its own git repo for tracking config changes
+
+**To reconfigure** an existing project, run `./setup.sh` inside the project folder (it detects `.env` and enters reconfigure mode).
+
+**Do not:**
+- Open the template folder as a devcontainer
+- Copy `.env` between projects
+- Share `allowed-domains.txt` between projects
 
 ## What's Inside
 
@@ -357,8 +387,6 @@ safe-agentic-ai/
 │   ├── monitor.sh              # Live dashboard (run from host)
 │   ├── proxy-ctl.sh            # Manage proxy allowlist
 │   └── wipe.sh                 # Clean reset (3 levels: soft/hard/nuclear)
-├── .claude/
-│   └── settings.local.json     # Claude CLI permissions
 ├── workspace/                  # Shared folder (host <-> container)
 ├── docker-compose.yml          # Two containers: proxy + workspace
 ├── .env.example                # Configuration template

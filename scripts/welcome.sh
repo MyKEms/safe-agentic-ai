@@ -19,7 +19,8 @@ sudo chmod 777 /home/vscode/.ssh-agent/agent.sock 2>/dev/null || true
 
 # ─── Banner ─────────────────────────────────────────────────────────────────
 echo ""
-echo -e "${B}${C}  Safe Agentic AI — Claude Code Container${N}"
+PROJ="${PROJECT_NAME:-claude}"
+echo -e "${B}${C}  Safe Agentic AI — ${PROJ}${N}"
 echo -e "${D}  ─────────────────────────────────────────────${N}"
 echo ""
 
@@ -40,6 +41,25 @@ if [ $? -eq 0 ]; then
   echo -e "${G}$(echo "$KEY" | wc -l | xargs) key(s)${N} – $(echo "$KEY" | head -1 | awk '{print $3}')"
 else
   echo -e "${Y}not available${N} (check SSH agent on host)"
+fi
+
+# 1Password CLI
+echo -e -n "  ${B}1Password:${N}  "
+if command -v op &>/dev/null; then
+  if [ -S /home/vscode/.op/agent.sock ]; then
+    OP_EMAIL=$(op whoami --format=json 2>/dev/null | jq -r '.email // empty' 2>/dev/null)
+    if [ -n "$OP_EMAIL" ]; then
+      echo -e "${G}connected${N} ($OP_EMAIL)"
+    else
+      echo -e "${Y}socket mounted, not signed in on host${N}"
+    fi
+  elif [ -n "${OP_SERVICE_ACCOUNT_TOKEN:-}" ]; then
+    echo -e "${G}service account${N}"
+  else
+    echo -e "${D}not configured (no socket or token)${N}"
+  fi
+else
+  echo -e "${D}not installed${N}"
 fi
 
 # Proxy

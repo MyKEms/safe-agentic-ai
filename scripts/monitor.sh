@@ -20,6 +20,13 @@ BG_R="\033[41m"
 BG_G="\033[42m"
 BG_Y="\033[43m"
 
+# ─── Resolve project name for container names ────────────────────────────
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_NAME=$(grep '^PROJECT_NAME=' "$SCRIPT_DIR/../.env" 2>/dev/null | cut -d= -f2 | tr -d '"' | tr -d "'")
+PROJECT_NAME="${PROJECT_NAME:-claude}"
+PROXY_CONTAINER="${PROJECT_NAME}-proxy"
+WS_CONTAINER="${PROJECT_NAME}-workspace"
+
 status_badge() {
   case "$1" in
     running) echo -e "${BG_G}${B} RUNNING ${N}" ;;
@@ -43,8 +50,8 @@ render() {
   echo -e "${B}  Containers${N}"
   echo ""
 
-  for SVC in claude-workspace claude-proxy; do
-    local NAME=${SVC#claude-}
+  for SVC in $WS_CONTAINER $PROXY_CONTAINER; do
+    local NAME=${SVC#${PROJECT_NAME}-}
     local STATUS
     STATUS=$(docker inspect -f '{{.State.Status}}' "$SVC" 2>/dev/null || echo "not found")
     local HEALTH
@@ -80,7 +87,7 @@ render() {
 
   # ─── Claude process ─────────────────────────────────────────────────────
   local WS_STATUS
-  WS_STATUS=$(docker inspect -f '{{.State.Status}}' claude-workspace 2>/dev/null || echo "off")
+  WS_STATUS=$(docker inspect -f '{{.State.Status}}' $WS_CONTAINER 2>/dev/null || echo "off")
   if [ "$WS_STATUS" != "running" ]; then
     echo -e "  ${R}Workspace container is not running${N}"
     return
@@ -88,7 +95,7 @@ render() {
 
   echo -e "${B}  Claude Process${N}"
   echo ""
-  docker exec claude-workspace bash -c '
+  docker exec $WS_CONTAINER bash -c '
     PIDS=$(pgrep -f "^claude" 2>/dev/null || true)
     if [ -z "$PIDS" ]; then
       echo "  \033[2m(not running)\033[0m"
@@ -109,7 +116,7 @@ render() {
   echo -e "${B}  Network${N}"
   echo ""
   local CONNS
-  CONNS=$(docker exec claude-workspace ss -tnp 2>/dev/null | awk '
+  CONNS=$(docker exec $WS_CONTAINER ss -tnp 2>/dev/null | awk '
     /ESTAB/ && /proxy:3128/ {
       match($0, /users:\(\("([^"]+)"/, a)
       print "proxy  " a[1]
@@ -131,7 +138,7 @@ render() {
   # ─── Proxy log ──────────────────────────────────────────────────────────
   echo -e "${B}  Proxy Activity (last 8)${N}"
   echo ""
-  docker exec claude-proxy tail -8 /var/log/squid/access.log 2>/dev/null | awk '{
+  docker exec $PROXY_CONTAINER tail -8 /var/log/squid/access.log 2>/dev/null | awk '{
     split($4, t, ":")
     time = t[2]":"t[3]":"t[4]
     status = $6
@@ -149,9 +156,9 @@ render() {
 
   # ─── Blocked requests ──────────────────────────────────────────────────
   local DENIED
-  DENIED=$(docker exec claude-proxy grep -c "TCP_DENIED" /var/log/squid/access.log 2>/dev/null || echo 0)
+  DENIED=$(docker exec $PROXY_CONTAINER grep -c "TCP_DENIED" /var/log/squid/access.log 2>/dev/null || echo 0)
   local RECENT_DENIED
-  RECENT_DENIED=$(docker exec claude-proxy tail -100 /var/log/squid/access.log 2>/dev/null | grep "TCP_DENIED" | tail -3)
+  RECENT_DENIED=$(docker exec $PROXY_CONTAINER tail -100 /var/log/squid/access.log 2>/dev/null | grep "TCP_DENIED" | tail -3)
 
   if [ "$DENIED" -gt 0 ] 2>/dev/null; then
     echo -e "${B}  ${R}Blocked Requests${N} ${D}(${DENIED} total)${N}"
@@ -174,7 +181,7 @@ render() {
   echo -e "${B}  SSH Agent${N}"
   echo ""
   local KEYS
-  KEYS=$(docker exec claude-workspace ssh-add -l 2>&1)
+  KEYS=$(docker exec $WS_CONTAINER ssh-add -l 2>&1)
   if echo "$KEYS" | grep -q "SHA256"; then
     echo "$KEYS" | while read -r _ HASH NAME _; do
       echo -e "  ${G}*${N} ${NAME} ${D}(${HASH})${N}"

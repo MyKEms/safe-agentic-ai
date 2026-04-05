@@ -15,7 +15,7 @@ services:
   # --------------------------------------------------------
   proxy:
     image: ubuntu/squid:latest
-    container_name: claude-proxy
+    container_name: ${PROJECT_NAME:-claude}-proxy
     networks:
       - claude-net      # internal: workspace ↔ proxy
       - proxy-egress    # external: proxy → internet
@@ -50,7 +50,7 @@ services:
       args:
         CONTAINER_PLATFORM: ${CONTAINER_PLATFORM:-linux/amd64}
         INSTALL_PLAYWRIGHT: ${INSTALL_PLAYWRIGHT:-true}
-    container_name: claude-workspace
+    container_name: ${PROJECT_NAME:-claude}-workspace
     depends_on:
       proxy:
         condition: service_healthy
@@ -67,6 +67,10 @@ services:
       - type: bind
         source: ${SSH_AGENT_SOCK_HOST:-/dev/null}
         target: /home/vscode/.ssh-agent/agent.sock
+      # --- 1Password CLI socket (biometric auth from host) ---
+      - type: bind
+        source: ${OP_CLI_SOCK_HOST:-/dev/null}
+        target: /home/vscode/.op/agent.sock
       # --- SSH keys (read-only) ---
       - ${SSH_HOST_PATH}:/home/vscode/.ssh:ro
       # --- Scripts (read-only) ---
@@ -82,7 +86,10 @@ services:
       SSH_AUTH_SOCK: /home/vscode/.ssh-agent/agent.sock
       HTTP_PROXY: http://proxy:3128
       HTTPS_PROXY: http://proxy:3128
+      http_proxy: http://proxy:3128
+      https_proxy: http://proxy:3128
       NO_PROXY: localhost,127.0.0.1
+      no_proxy: localhost,127.0.0.1
       PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
       GIT_USER_NAME: ${GIT_USER_NAME:-}
       GIT_USER_EMAIL: ${GIT_USER_EMAIL:-}
@@ -90,6 +97,8 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       CLAUDE_MODEL: ${CLAUDE_MODEL:-}
       CLAUDE_MAX_TURNS: ${CLAUDE_MAX_TURNS:-}
+      OP_SERVICE_ACCOUNT_TOKEN: ${OP_SERVICE_ACCOUNT_TOKEN:-}
+      PROJECT_NAME: ${PROJECT_NAME:-claude}
     deploy:
       resources:
         limits:

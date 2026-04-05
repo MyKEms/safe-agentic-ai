@@ -77,6 +77,10 @@ status.anthropic.com
 .docker.io
 .docker.com
 
+# --- 1Password CLI ---
+.1password.com
+.agilebits.com
+
 # ============================================================
 # ADD YOUR DOMAINS BELOW
 # ============================================================

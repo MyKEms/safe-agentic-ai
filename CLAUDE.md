@@ -2,11 +2,13 @@
 
 ## What This Is
 
-A containerized, security-first environment for running AI coding agents (Claude Code CLI) safely on macOS, Windows, and Linux.
+A **template** for creating containerized, security-first environments for running AI coding agents (Claude Code CLI) safely on macOS, Windows, and Linux.
 
-Two Docker containers:
-- **claude-workspace** — Ubuntu 22.04 with Claude CLI, Node 20, Playwright. Has zero direct internet access.
-- **claude-proxy** — Squid forward proxy. Allowlist-only egress. Default deny.
+This repo is never used directly as a devcontainer. Run `./setup.sh <path>` to scaffold a new project folder from this template. Each project gets its own `.env`, proxy allowlist, and uniquely named containers.
+
+Two Docker containers per project:
+- **\<name\>-workspace** — Ubuntu 22.04 with Claude CLI, Node 20, Playwright, 1Password CLI. Has zero direct internet access.
+- **\<name\>-proxy** — Squid forward proxy. Allowlist-only egress. Default deny.
 
 The workspace can only reach the internet through the proxy. This makes `--dangerously-skip-permissions` safe: the agent has freedom inside a locked box.
 
@@ -49,8 +51,18 @@ Host machine
 - Scripts in `scripts/` are mounted read-only into the container
 - Proxy config is mounted read-only
 - SSH keys are mounted read-only; SSH agent socket is the preferred method
-- Container names are `claude-proxy` and `claude-workspace` (hardcoded — preflight.sh detects conflicts)
+- Container names are `${PROJECT_NAME}-proxy` and `${PROJECT_NAME}-workspace` (derived from `.env`, default `claude`)
+- This repo is a template — never open it directly as a devcontainer; use `setup.sh <path>` to create project folders
+- Each project must have its own folder — do not share `.env` or `allowed-domains.txt` between projects
 - All shell scripts use `#!/usr/bin/env bash` and must keep LF line endings (enforced by `.gitattributes`)
+
+## 1Password CLI Support
+
+The `op` CLI is installed in the container image. Two auth methods:
+1. **App integration** (biometric) — mount the host's 1Password CLI socket via `OP_CLI_SOCK_HOST` in `.env`. The socket is mapped to `/home/vscode/.op/agent.sock` and `setup-container.sh` configures `app_integrated: true` automatically.
+2. **Service account token** — set `OP_SERVICE_ACCOUNT_TOKEN` in `.env`. No socket needed.
+
+Usage inside the container: `op run --env-file=.env.tpl -- command` (where `.env.tpl` contains `op://` references)
 
 ## SSH Agent Support
 

@@ -16,6 +16,12 @@ N="\033[0m"
 
 ERRORS=0
 
+# ─── Resolve project name for container name checks ──────────────────────
+PROJECT_NAME=$(grep '^PROJECT_NAME=' .env 2>/dev/null | cut -d= -f2 | tr -d '"' | tr -d "'")
+PROJECT_NAME="${PROJECT_NAME:-claude}"
+PROXY_CONTAINER="${PROJECT_NAME}-proxy"
+WS_CONTAINER="${PROJECT_NAME}-workspace"
+
 # ─── Check .env exists ──────────────────────────────────────────────────────
 if [ ! -f .env ]; then
   echo ""
@@ -44,7 +50,7 @@ fi
 if docker info &>/dev/null; then
   CONFLICTS=""
 
-  for NAME in claude-proxy claude-workspace; do
+  for NAME in "$PROXY_CONTAINER" "$WS_CONTAINER"; do
     EXISTING=$(docker ps -a --filter "name=^/${NAME}$" --format '{{.ID}} {{.Status}} (project: {{.Label "com.docker.compose.project"}})' 2>/dev/null)
     if [ -n "$EXISTING" ]; then
       # Check if it belongs to a DIFFERENT compose project
@@ -65,8 +71,8 @@ if docker info &>/dev/null; then
     echo -e "$CONFLICTS"
     echo -e "  ${B}To fix, stop the conflicting containers:${N}"
     echo ""
-    echo "    docker stop claude-proxy claude-workspace"
-    echo "    docker rm claude-proxy claude-workspace"
+    echo "    docker stop $PROXY_CONTAINER $WS_CONTAINER"
+    echo "    docker rm $PROXY_CONTAINER $WS_CONTAINER"
     echo ""
     echo -e "  ${D}Then retry: Cmd+Shift+P → 'Dev Containers: Reopen in Container'${N}"
     echo ""

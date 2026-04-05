@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-# setup.sh – First-time setup wizard for Safe Agentic AI
+# setup.sh – Create and configure Safe Agentic AI projects
 # ─────────────────────────────────────────────────────────────────────────────
-# Detects your platform, asks a few questions, generates .env
-# Run once before opening in VS Code Dev Containers.
+# Template mode (no .env): scaffolds a new project folder, then configures it
+# Project mode  (.env exists): reconfigures the current project
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 
@@ -11,15 +11,85 @@ B="\033[1m"
 C="\033[36m"
 G="\033[32m"
 Y="\033[33m"
+R="\033[31m"
 D="\033[2m"
 N="\033[0m"
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# ─── Scaffold mode (template → new project) ──────────────────────────────
+# Triggers when there is no .env (we're in the clean template)
+if [ ! -f "$SCRIPT_DIR/.env" ] && [ "${1:-}" != "--configure" ]; then
+  echo ""
+  echo -e "${B}${C}  Safe Agentic AI — New Project${N}"
+  echo -e "  ====================================="
+  echo ""
+  echo -e "  This is the template. It will create a new project folder for you."
+  echo -e "  ${D}Each project gets its own config, proxy allowlist, and containers.${N}"
+  echo ""
+
+  TARGET_DIR="${1:-}"
+  if [ -z "$TARGET_DIR" ]; then
+    read -rp "  Project folder path (e.g. ~/my-project-agent): " TARGET_DIR
+  fi
+
+  if [ -z "$TARGET_DIR" ]; then
+    echo -e "  ${R}No path provided. Aborting.${N}"
+    exit 1
+  fi
+
+  # Expand ~ and make absolute
+  if [[ "$TARGET_DIR" == ~* ]]; then
+    TARGET_DIR="${TARGET_DIR/#\~/$HOME}"
+  fi
+  case "$TARGET_DIR" in
+    /*) ;; # already absolute
+    *)  TARGET_DIR="$(pwd)/$TARGET_DIR" ;;
+  esac
+
+  if [ -d "$TARGET_DIR" ] && [ -n "$(ls -A "$TARGET_DIR" 2>/dev/null)" ]; then
+    echo -e "  ${R}ERROR: $TARGET_DIR already exists and is not empty.${N}"
+    exit 1
+  fi
+
+  echo -e "  Creating project at: ${G}$TARGET_DIR${N}"
+  echo ""
+  mkdir -p "$TARGET_DIR"
+
+  # Copy template files (exclude git history, env, OS artifacts)
+  (cd "$SCRIPT_DIR" && tar \
+    --exclude='.git' \
+    --exclude='.env' \
+    --exclude='.DS_Store' \
+    --exclude='node_modules' \
+    --exclude='__pycache__' \
+    -cf - .) | (cd "$TARGET_DIR" && tar xf -)
+
+  chmod +x "$TARGET_DIR/setup.sh" "$TARGET_DIR"/scripts/*.sh 2>/dev/null || true
+
+  # Initialize git repo so config changes are tracked
+  (cd "$TARGET_DIR" && git init -q && git add -A && git commit -q -m "Initialize from safe-agentic-ai template")
+
+  echo -e "  ${G}Project scaffolded.${N} Running configuration wizard..."
+  echo ""
+
+  # Re-exec setup.sh in the new project folder
+  exec bash "$TARGET_DIR/setup.sh" --configure
+fi
+
+# Consume --configure flag if present
+[ "${1:-}" = "--configure" ] && shift
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Configuration wizard — runs inside a project folder
+# ─────────────────────────────────────────────────────────────────────────────
+
 echo ""
-echo -e "${B}${C}  Safe Agentic AI — First Time Setup${N}"
+echo -e "${B}${C}  Safe Agentic AI — Project Setup${N}"
 echo -e "  ====================================="
 echo ""
 
-# ─── Detect platform ────────────────────────────────────────────────────────
+# ─── Detect platform ─────────────────────────────────────────��──────────────
 case "$(uname -s)" in
   Darwin*)  PLATFORM="macos" ;;
   MINGW*|MSYS*|CYGWIN*) PLATFORM="windows" ;;
@@ -30,7 +100,20 @@ esac
 echo -e "  Platform detected: ${G}${PLATFORM}${N}"
 echo ""
 
-# ─── Platform-specific defaults ─────────────────────────────────────────────
+# ─── Project name ────────────────────────────────────────────────────────
+echo -e "${B}  Project Name${N}"
+echo -e "  ${D}Used for container names and identification.${N}"
+echo -e "  ${D}Use lowercase, letters/numbers/hyphens only.${N}"
+echo ""
+PROJECT_DEFAULT=$(basename "$(pwd)" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g')
+read -rp "  Project name [$PROJECT_DEFAULT]: " PROJECT_INPUT
+PROJECT_NAME="${PROJECT_INPUT:-$PROJECT_DEFAULT}"
+# Sanitize
+PROJECT_NAME=$(echo "$PROJECT_NAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g' | sed 's/^-//' | sed 's/-$//')
+echo -e "  Containers will be: ${C}${PROJECT_NAME}-workspace${N}, ${C}${PROJECT_NAME}-proxy${N}"
+echo ""
+
+# ─── Platform-specific defaults ─────────────────────────��───────────────────
 WORKSPACE_DEFAULT="$HOME/GIT"
 SSH_PATH_DEFAULT="$HOME/.ssh"
 CLAUDE_PATH_DEFAULT="$HOME/.claude"
@@ -81,6 +164,7 @@ read -rp "  Choice [1]: " AGENT_CHOICE
 AGENT_CHOICE="${AGENT_CHOICE:-1}"
 
 SSH_SOCK=""
+OP_CLI_SOCK=""
 AGENT_PROVIDER="none"
 
 case "$AGENT_CHOICE" in
@@ -112,6 +196,30 @@ case "$AGENT_CHOICE" in
     fi
     read -rp "  1Password socket [$SSH_SOCK_DEFAULT]: " SSH_SOCK_INPUT
     SSH_SOCK="${SSH_SOCK_INPUT:-$SSH_SOCK_DEFAULT}"
+
+    # Auto-detect 1Password CLI socket (for op run / vault access)
+    echo ""
+    echo -e "  ${D}1Password CLI integration (for 'op run', 'op read' inside container):${N}"
+    echo -e "  ${D}  1Password -> Settings -> Developer -> 'Connect with 1Password CLI' (toggle ON)${N}"
+    echo ""
+    case "$PLATFORM" in
+      macos)
+        OP_CLI_SOCK_DEFAULT="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/s.sock"
+        ;;
+      linux)
+        OP_CLI_SOCK_DEFAULT="$HOME/.1password/op-cli.sock"
+        ;;
+      *)
+        OP_CLI_SOCK_DEFAULT=""
+        ;;
+    esac
+    if [ -n "$OP_CLI_SOCK_DEFAULT" ] && [ -e "$OP_CLI_SOCK_DEFAULT" ]; then
+      echo -e "  ${G}1Password CLI socket found.${N}"
+    elif [ -n "$OP_CLI_SOCK_DEFAULT" ]; then
+      echo -e "  ${Y}CLI socket not found — is 'Connect with 1Password CLI' enabled?${N}"
+    fi
+    read -rp "  1Password CLI socket [$OP_CLI_SOCK_DEFAULT]: " OP_CLI_SOCK_INPUT
+    OP_CLI_SOCK="${OP_CLI_SOCK_INPUT:-$OP_CLI_SOCK_DEFAULT}"
     ;;
   2)
     AGENT_PROVIDER="keeper"
@@ -214,6 +322,9 @@ cat > .env << ENVEOF
 # Generated by setup.sh on $(date '+%Y-%m-%d %H:%M:%S')
 # Platform: $PLATFORM
 
+# Project identity — one folder per project, do not share
+PROJECT_NAME=$PROJECT_NAME
+
 PLATFORM=$PLATFORM
 
 # Container architecture
@@ -227,6 +338,9 @@ GIT_USER_EMAIL=$GIT_EMAIL
 # SSH Agent
 SSH_AGENT_PROVIDER=$AGENT_PROVIDER
 SSH_AGENT_SOCK_HOST=$SSH_SOCK
+
+# 1Password CLI (op) — app integration socket for biometric auth
+OP_CLI_SOCK_HOST=$OP_CLI_SOCK
 
 # Paths
 WORKSPACE_PATH=$WORKSPACE
@@ -265,11 +379,12 @@ fi
 chmod +x scripts/*.sh 2>/dev/null || true
 
 # ─── Next steps ──────────────────────────────────────────────────────────────
+PROJECT_DIR="$(pwd)"
 echo ""
 echo -e "${B}  Next steps:${N}"
 echo ""
-echo "  1. Open this folder in VS Code:"
-echo "     code ."
+echo "  1. Open this project folder in VS Code:"
+echo "     code $PROJECT_DIR"
 echo ""
 echo "  2. Reopen in container:"
 echo "     Cmd+Shift+P (macOS) / Ctrl+Shift+P (Windows)"

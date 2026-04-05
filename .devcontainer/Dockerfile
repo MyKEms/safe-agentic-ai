@@ -25,6 +25,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     htop \
   && rm -rf /var/lib/apt/lists/*
 
+# --- 1Password CLI (vault access from workspace) ---
+RUN ARCH=$(dpkg --print-architecture) \
+    && curl -sSfo /tmp/op.zip \
+       "https://cache.agilebits.com/dist/1P/op2/pkg/v2.32.0/op_linux_${ARCH}_v2.32.0.zip" \
+    && unzip -o /tmp/op.zip op -d /usr/local/bin \
+    && chmod +x /usr/local/bin/op \
+    && rm -f /tmp/op.zip
+
 # --- Node.js 20 ---
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
   && apt-get install -y nodejs \
@@ -55,7 +63,7 @@ RUN echo 'Acquire::http::Proxy "http://proxy:3128/";\nAcquire::https::Proxy "htt
 
 # --- Non-root user setup ---
 USER vscode
-RUN mkdir -p /home/vscode/.npm /home/vscode/.ssh-agent
+RUN mkdir -p /home/vscode/.npm /home/vscode/.ssh-agent /home/vscode/.op
 
 # --- Shell aliases & environment ---
 RUN echo '\n\
