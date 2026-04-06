@@ -127,6 +127,15 @@ Each project gets:
 
 **To reconfigure** an existing project, run `./setup.sh` inside the project folder (it detects `.env` and enters reconfigure mode).
 
+**To update** an existing project with the latest template (new Dockerfile, scripts, etc.):
+```bash
+cd ~/safe-agentic-ai
+git pull                              # get latest template
+./update.sh ~/my-project-agent        # sync infrastructure files
+# then rebuild container in VS Code
+```
+Your `.env`, custom domains, and workspace files are preserved.
+
 **Do not:**
 - Open the template folder as a devcontainer
 - Copy `.env` between projects

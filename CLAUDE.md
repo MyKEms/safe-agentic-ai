@@ -36,6 +36,7 @@ Host machine
 | `proxy/squid.conf` | Squid ACLs, timeouts for long-running agents |
 | `proxy/allowed-domains.txt` | Domain allowlist (~50 entries) |
 | `setup.sh` | Template scaffolding (creates project folders) and project configuration wizard |
+| `update.sh` | Update existing project with latest template files (preserves .env, domains, workspace) |
 | `scripts/preflight.sh` | Host-side check before build (conflicts, missing .env, Docker status) |
 | `scripts/setup-container.sh` | One-time container init (git config, 1Password CLI, MCP, Claude permissions, verification) |
 | `scripts/welcome.sh` | Startup banner with status checks |
