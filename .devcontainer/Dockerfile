@@ -39,6 +39,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
   && rm -rf /var/lib/apt/lists/*
 
 # --- Claude Code CLI ---
+# Baked into image; auto-updated on every container start via welcome.sh
 RUN npm install -g @anthropic-ai/claude-code
 
 # --- Playwright (Chromium only, headless) ---

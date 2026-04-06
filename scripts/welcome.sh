@@ -24,14 +24,16 @@ echo -e "${B}${C}  Safe Agentic AI — ${PROJ}${N}"
 echo -e "${D}  ─────────────────────────────────────────────${N}"
 echo ""
 
-# Claude version
+# Claude version — auto-update on start
 LOCAL_VER=$(claude --version 2>/dev/null | awk '{print $1}')
-echo -e -n "  ${B}Claude CLI:${N}  ${LOCAL_VER:-not found}"
 LATEST_VER=$(npm view @anthropic-ai/claude-code version 2>/dev/null)
 if [ -n "$LATEST_VER" ] && [ -n "$LOCAL_VER" ] && [ "$LOCAL_VER" != "$LATEST_VER" ]; then
-  echo -e "  ${Y}(update: ${LATEST_VER})${N} ${D}npm i -g @anthropic-ai/claude-code@latest${N}"
+  echo -e -n "  ${B}Claude CLI:${N}  ${LOCAL_VER} ${Y}→ ${LATEST_VER}${N} updating..."
+  sudo npm install -g @anthropic-ai/claude-code@latest --loglevel=error 2>/dev/null
+  LOCAL_VER=$(claude --version 2>/dev/null | awk '{print $1}')
+  echo -e "\r  ${B}Claude CLI:${N}  ${LOCAL_VER} ${G}(updated)${N}                    "
 else
-  echo ""
+  echo -e "  ${B}Claude CLI:${N}  ${LOCAL_VER:-not found}"
 fi
 
 # SSH agent
