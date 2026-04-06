@@ -12,14 +12,16 @@ Usage: $(basename "$0") <command> [args]
 
 Commands:
   list                   Show all active (non-commented) domains
-  add <domain>           Add a domain to the allowlist and reload proxy
+  add <domain>           Add a domain (auto-prefixes . for wildcard subdomains)
   remove <domain>        Comment out a domain and reload proxy
   test <url>             Test if a URL is reachable through the proxy
   logs                   Tail proxy access logs (Ctrl+C to stop)
   reload                 Restart the proxy to pick up config changes
 
 Examples:
-  $(basename "$0") add .pypi.org
+  $(basename "$0") add nasems.cz       # adds .nasems.cz (matches nasems.cz + *.nasems.cz)
+  $(basename "$0") add .pypi.org       # already has dot, kept as-is
+  $(basename "$0") remove nasems.cz    # removes .nasems.cz
   $(basename "$0") test https://api.anthropic.com/v1/messages
   $(basename "$0") list
 EOF
@@ -37,8 +39,14 @@ case "${1:-}" in
     grep -v '^\s*#' "$DOMAINS_FILE" | grep -v '^\s*$' | sort
     ;;
   add)
-    [[ -z "${2:-}" ]] && { echo "Error: specify a domain, e.g.: add .pypi.org"; exit 1; }
+    [[ -z "${2:-}" ]] && { echo "Error: specify a domain, e.g.: add nasems.cz"; exit 1; }
     domain="$2"
+    # Auto-prepend . for wildcard subdomain matching (Squid dstdomain convention)
+    # .example.com matches example.com AND *.example.com
+    if [[ "$domain" != .* ]]; then
+      domain=".$domain"
+      echo "Using .$2 (matches $2 + all subdomains)"
+    fi
     if grep -qF "$domain" "$DOMAINS_FILE"; then
       sed -i.bak "s|^#\s*${domain}|${domain}|" "$DOMAINS_FILE" && rm -f "$DOMAINS_FILE.bak"
       echo "Uncommented: $domain"
@@ -51,6 +59,10 @@ case "${1:-}" in
   remove)
     [[ -z "${2:-}" ]] && { echo "Error: specify a domain"; exit 1; }
     domain="$2"
+    # Match with or without dot prefix
+    if [[ "$domain" != .* ]]; then
+      domain=".$domain"
+    fi
     sed -i.bak "s|^${domain}|# ${domain}|" "$DOMAINS_FILE" && rm -f "$DOMAINS_FILE.bak"
     echo "Commented out: $domain"
     reload_proxy

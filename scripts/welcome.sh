@@ -68,9 +68,10 @@ fi
 
 # Playwright
 echo -e -n "  ${B}Playwright:${N}  "
-PW_VER=$(node -e "try{console.log(require('playwright/package.json').version)}catch{}" 2>/dev/null)
-if [ -n "$PW_VER" ] && [ -d "${PLAYWRIGHT_BROWSERS_PATH:-/opt/pw-browsers}" ]; then
-  echo -e "${G}${PW_VER}${N} (Chromium, headless)"
+PW_DIR="${PLAYWRIGHT_BROWSERS_PATH:-/opt/pw-browsers}"
+if [ -d "$PW_DIR" ] && ls "$PW_DIR"/chromium-* &>/dev/null; then
+  PW_BROWSER=$(ls -d "$PW_DIR"/chromium-* 2>/dev/null | head -1 | xargs basename)
+  echo -e "${G}${PW_BROWSER}${N} (headless)"
 else
   echo -e "${Y}not installed${N}"
 fi
