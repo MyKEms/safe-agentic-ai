@@ -76,7 +76,7 @@ The socket is mounted to `/home/vscode/.ssh-agent/agent.sock` inside the contain
 
 ## Cross-Platform
 
-- macOS (Intel + Apple Silicon): native arm64/amd64, no Rosetta needed
+- macOS (Intel + Apple Silicon): native arm64/amd64, no Rosetta needed. OrbStack recommended over Docker Desktop
 - Windows: Docker Desktop with WSL2 backend, SSH agent via `/run/host-services/ssh-auth.sock`
 - Linux: Docker Engine, native paths
 

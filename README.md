@@ -37,7 +37,9 @@ This means `--dangerously-skip-permissions` is safe to use: the agent has freedo
 
 ## Prerequisites
 
-1. **Docker Desktop** — [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/) (macOS, Windows, Linux)
+1. **Docker runtime** — one of:
+   - **OrbStack** (recommended for macOS) — [orbstack.dev](https://orbstack.dev/) — faster, lighter, drop-in Docker Desktop replacement
+   - **Docker Desktop** — [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/) (macOS, Windows, Linux)
 2. **VS Code** — [code.visualstudio.com/Download](https://code.visualstudio.com/Download)
 3. **Dev Containers extension** — install from VS Code: `ms-vscode-remote.remote-containers`
 4. **Claude CLI** (optional, for host-side debugging) — `npm install -g @anthropic-ai/claude-code` or `brew install claude-code`
@@ -281,7 +283,7 @@ If you skip the SSH agent, key-based git operations (push, pull over SSH) won't 
 
 | | macOS | Windows | Linux |
 |---|---|---|---|
-| Docker runtime | Docker Desktop or Colima | Docker Desktop (WSL2 backend) | Docker Engine |
+| Docker runtime | OrbStack (recommended) or Docker Desktop | Docker Desktop (WSL2 backend) | Docker Engine |
 | Apple Silicon | Native arm64 (no emulation) | N/A | N/A |
 | SSH socket | 1Password / Keeper native path | Docker Desktop forwarded socket | `SSH_AUTH_SOCK` |
 | Resources | Configurable in `.env` | Configurable in `.env` | Configurable in `.env` |

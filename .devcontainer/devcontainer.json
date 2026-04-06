@@ -19,6 +19,7 @@
         "Gruntfuggly.todo-tree"
       ],
       "settings": {
+        "telemetry.telemetryLevel": "off",
         "terminal.integrated.defaultProfile.linux": "bash",
         "terminal.integrated.scrollback": 10000,
         "files.trimTrailingWhitespace": true,
