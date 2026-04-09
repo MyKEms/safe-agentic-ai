@@ -113,7 +113,7 @@ macOS / Linux:
 ./setup.sh ~/my-project-agent
 ```
 
-Windows (run from **Git Bash** or **WSL**, not PowerShell/CMD):
+Windows (run from a **WSL terminal**, not PowerShell/CMD):
 ```bash
 bash setup.sh ~/my-project-agent
 ```
@@ -348,10 +348,9 @@ If you skip the SSH agent, key-based git operations (push, pull over SSH) won't 
 The `setup.sh` wizard scaffolds a project folder, auto-detects your platform, and generates the correct `.env` configuration.
 
 **Windows notes:**
-- Run `setup.sh` from Git Bash or WSL2 terminal
+- **Always use a WSL terminal** - run `setup.sh`, `code`, and all commands from WSL (not PowerShell, CMD, or Git Bash). Mixing Windows and WSL filesystems causes path and performance issues
 - Docker Desktop must be running with WSL2 backend
 - For 1Password SSH agent forwarding, enable WSL Integration in Docker Desktop settings
-- **Project path matters**: create projects on `/mnt/c/Users/YourName/...` (Windows filesystem) so VS Code can open them directly. Projects created on the WSL filesystem (`~/...`) require `\\wsl$\Ubuntu\...` paths from Windows
 
 ## Troubleshooting
 

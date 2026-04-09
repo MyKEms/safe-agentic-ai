@@ -107,6 +107,12 @@ case "$(uname -s)" in
 esac
 
 echo -e "  Platform detected: ${G}${PLATFORM}${N}"
+if [ "$PLATFORM" = "windows" ]; then
+  echo ""
+  echo -e "  ${Y}Windows/WSL: always run setup.sh and 'code' from a WSL terminal.${N}"
+  echo -e "  ${Y}Do not use PowerShell, CMD, or Git Bash - filesystem and path${N}"
+  echo -e "  ${Y}issues will cause problems.${N}"
+fi
 echo ""
 
 # ─── Project name ────────────────────────────────────────────────────────
@@ -351,23 +357,9 @@ echo ""
 echo -e "${B}  Next steps:${N}"
 echo ""
 echo "  1. Open this project folder in VS Code:"
+echo "     code $PROJECT_DIR"
 if [ "$PLATFORM" = "windows" ]; then
-  if [[ "$PROJECT_DIR" == /mnt/* ]]; then
-    # Project is on Windows filesystem - works directly
-    WIN_PATH=$(wslpath -w "$PROJECT_DIR" 2>/dev/null || echo "$PROJECT_DIR")
-    echo "     code \"$WIN_PATH\""
-  else
-    # Project is on WSL filesystem - needs special handling
-    echo "     Open a WSL terminal and run: code $PROJECT_DIR"
-    echo ""
-    echo -e "  ${Y}  Note: this project is on the WSL filesystem.${N}"
-    echo -e "  ${Y}  VS Code must be opened from WSL bash, not from PowerShell.${N}"
-    echo ""
-    echo -e "  ${D}  For easier access, create projects on the Windows filesystem:${N}"
-    echo -e "  ${D}  bash setup.sh /mnt/c/Users/\$USER/my-project${N}"
-  fi
-else
-  echo "     code $PROJECT_DIR"
+  echo -e "     ${Y}(run this from WSL terminal, not PowerShell)${N}"
 fi
 echo ""
 echo "  2. Reopen in container:"
