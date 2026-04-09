@@ -78,10 +78,9 @@ Each project has its own Docker volume (`claude-state`) where Claude stores memo
                    |  Node 20        |      workspace/
                    |  Claude CLI     |  <-- mounted from host
                    |  Playwright     |
-                   |  1Password CLI  |
                    +------------------+
                             |
-                     SSH agent + 1Password sockets
+                     SSH agent socket
                      (1Password / Keeper / custom)
 ```
 
@@ -193,7 +192,7 @@ Your `.env`, custom domains, and workspace files are preserved.
 | Component | Purpose |
 |---|---|
 | `<name>-proxy` | Squid forward proxy, allowlist-only egress, default deny |
-| `<name>-workspace` | Ubuntu 24.04 + Node 20 + Claude CLI + Playwright + 1Password CLI |
+| `<name>-workspace` | Ubuntu 24.04 + Node 20 + Claude CLI + Playwright |
 | `claude-net` | Internal Docker network (no internet) |
 | `proxy-egress` | Proxy-only network with internet access |
 | `claude-state` (volume) | Persistent Claude CLI state: memory, sessions, auth tokens |
@@ -220,6 +219,8 @@ Available inside the workspace container:
 | `ccd` | `claude --dangerously-skip-permissions` | Autonomous mode (safe in this container) |
 | `ccw` | watchdog mode via `watchdog.sh` | Auto-restart on crash, long-running agents |
 | `cch "task"` | headless autonomous agent | Fire-and-forget tasks |
+
+**Don't want `--dangerously-skip-permissions`?** Use `cc` (interactive mode) - Claude will ask before each action. The network isolation still protects you. You can also configure allowed tools granularly in `/workspace/.claude/settings.local.json` (e.g. allow `Bash(git:*)` and `Write(*)` but nothing else). This is a middle ground, though it can be less reliable than full autonomous mode for complex tasks.
 
 ## Proxy Management
 
@@ -295,11 +296,13 @@ Set `ANTHROPIC_API_KEY` in `.env`. The key is injected as an environment variabl
 
 ## SSH Agent Setup
 
-The container mounts your SSH agent socket so your private keys are never exposed. The `setup.sh` wizard asks which provider you use.
+The container mounts your SSH agent socket so your private keys are never exposed. Private keys stay in your password manager on the host - only the agent socket is forwarded into the container. The `setup.sh` wizard asks which provider you use.
+
+The main reason to use 1Password or Keeper as your SSH agent: **biometric authentication (Touch ID / Windows Hello)**. When Claude Code pushes to GitHub or connects to a server via SSH, your password manager prompts for Touch ID on the host. The container never sees your private keys.
 
 ### 1Password
 
-The most common setup. 1Password exposes an SSH agent socket that the container uses directly.
+The most common setup. 1Password's SSH agent socket is mounted directly into the container.
 
 | Platform | Socket path |
 |---|---|
@@ -431,7 +434,7 @@ When in doubt, open a terminal on your host machine and run `claude` (safe mode)
 ```
 claude-code-sandbox/
 ├── .devcontainer/
-│   ├── Dockerfile              # Ubuntu 24.04, Node 20, Claude CLI, Playwright, 1Password CLI
+│   ├── Dockerfile              # Ubuntu 24.04, Node 20, Claude CLI, Playwright
 │   └── devcontainer.json       # VS Code dev container config
 ├── proxy/
 │   ├── squid.conf              # Squid proxy (allowlist-only, default deny)
