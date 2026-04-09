@@ -20,6 +20,7 @@
       ],
       "settings": {
         "telemetry.telemetryLevel": "off",
+        "chat.commandCenter.enabled": false,
         "terminal.integrated.defaultProfile.linux": "bash",
         "terminal.integrated.scrollback": 10000,
         "files.trimTrailingWhitespace": true,
