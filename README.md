@@ -38,6 +38,20 @@ You give Claude a task. It works on it. You close VS Code, come back later, and 
 - Not an AI framework or SDK
 - Not a cloud deployment tool
 
+### How it compares to the official Anthropic devcontainer
+
+Anthropic provides a [reference devcontainer](https://code.claude.com/docs/en/devcontainer) for Claude Code. It's a solid starting point and what inspired this project. The main differences:
+
+| | Official Anthropic | claude-code-sandbox |
+|---|---|---|
+| Network filtering | iptables + ipset (L3/L4, IP-based) | Squid proxy (L7, hostname-based) |
+| Container capabilities | Requires `NET_ADMIN` | No elevated capabilities |
+| Allowlist | IPs resolved and pinned at startup | Hostnames resolved per-request |
+| Setup | Dev Container tooling | Plain `docker compose` (Dev Container optional) |
+| Project scaffolding | Manual | `setup.sh` wizard with per-project isolation |
+
+The L7 approach means you allowlist `github.com` by name, not by its current IP addresses. When CDN providers rotate IPs, the allowlist keeps working.
+
 ### Memory isolation
 
 Each project has its own Docker volume (`claude-state`) where Claude stores memory - MEMORY.md, session history, learned preferences, project-specific knowledge. These are **never shared between projects**. When you switch between projects, each Claude instance remembers only its own context. Think of it as having a dedicated developer assistant per project who knows that project's codebase, conventions, and history - and nothing else.
