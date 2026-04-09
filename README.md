@@ -1,6 +1,6 @@
-# safe-agentic-ai
+# claude-code-sandbox
 
-A containerized, security-first setup for running AI coding agents (Claude Code CLI) safely on your machine.
+Secure Dev Container template for running Claude Code CLI autonomously. Network-isolated Docker workspace with allowlist-only proxy, per-project memory, and persistent auth.
 
 <p align="center">
     <img src="https://github.com/user-attachments/assets/698bcf98-43cd-40eb-8e43-b84f3ec52331" width="25%">
@@ -87,8 +87,8 @@ This means `--dangerously-skip-permissions` is safe to use: the agent has freedo
 **Step 1 - Clone the template (once):**
 
 ```bash
-git clone https://github.com/MyKEms/safe-agentic-ai.git
-cd safe-agentic-ai
+git clone https://github.com/MyKEms/claude-code-sandbox.git
+cd claude-code-sandbox
 ```
 
 **Step 2 - Create a project:**
@@ -142,7 +142,7 @@ Inside Claude CLI, type `/model` to select your preferred model and effort level
 This repo is a **template**. You never open it directly in VS Code Dev Containers. Instead, `setup.sh` creates a new project folder from it.
 
 ```
-safe-agentic-ai/              ← template (keep clean, update with git pull)
+claude-code-sandbox/              ← template (keep clean, update with git pull)
   └── setup.sh                ← creates project folders
 
 ~/my-project-agent/           ← project #1 (has its own .env, containers, allowlist)
@@ -160,7 +160,7 @@ Each project gets:
 
 **To update** an existing project with the latest template (new Dockerfile, scripts, etc.):
 ```bash
-cd ~/safe-agentic-ai
+cd ~/claude-code-sandbox
 git pull                              # get latest template
 ./update.sh ~/my-project-agent        # sync infrastructure files
 # then rebuild container in VS Code
@@ -413,7 +413,7 @@ When in doubt, open a terminal on your host machine and run `claude` (safe mode)
 ## Files
 
 ```
-safe-agentic-ai/
+claude-code-sandbox/
 ├── .devcontainer/
 │   ├── Dockerfile              # Ubuntu 24.04, Node 20, Claude CLI, Playwright, 1Password CLI
 │   └── devcontainer.json       # VS Code dev container config

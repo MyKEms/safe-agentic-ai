@@ -1,5 +1,5 @@
 # ============================================================
-# Safe Agentic AI — Docker Compose
+# Claude Code Sandbox — Docker Compose
 # ============================================================
 # Two-container architecture:
 #   1. proxy  — Squid forward proxy (allowlist-only egress)

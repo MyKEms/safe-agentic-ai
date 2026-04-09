@@ -50,7 +50,7 @@ fi
 # ─── Banner ─────────────────────────────────────────────────────────────────
 echo ""
 PROJ="${PROJECT_NAME:-claude}"
-echo -e "${B}${C}  Safe Agentic AI — ${PROJ}${N}"
+echo -e "${B}${C}  Claude Code Sandbox — ${PROJ}${N}"
 echo -e "${D}  ─────────────────────────────────────────────${N}"
 echo ""
 

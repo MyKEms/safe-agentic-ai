@@ -4,7 +4,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 
-echo "=== Safe Agentic AI — Container Setup ==="
+echo "=== Claude Code Sandbox — Container Setup ==="
 
 # ─── Fix ownership ──────────────────────────────────────────────────────────
 # The claude-state volume is created by Docker as root.

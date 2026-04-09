@@ -18,7 +18,7 @@ N="\033[0m"
 
 cd "$(dirname "$0")/.."
 
-echo -e "${B}=== Safe Agentic AI — Wipe Tool ===${N}"
+echo -e "${B}=== Claude Code Sandbox — Wipe Tool ===${N}"
 echo ""
 
 MODE="${1:-}"

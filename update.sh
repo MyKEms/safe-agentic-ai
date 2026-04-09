@@ -24,7 +24,7 @@ TEMPLATE_DIR="$(cd "$(dirname "$0")" && pwd)"
 TARGET_DIR="${1:-}"
 if [ -z "$TARGET_DIR" ]; then
   echo ""
-  echo -e "${B}${C}  Safe Agentic AI — Update Project${N}"
+  echo -e "${B}${C}  Claude Code Sandbox — Update Project${N}"
   echo ""
   read -rp "  Project folder path: " TARGET_DIR
 fi
@@ -50,7 +50,7 @@ if [ ! -f "$TARGET_DIR/.env" ]; then
 fi
 
 echo ""
-echo -e "${B}${C}  Safe Agentic AI — Update Project${N}"
+echo -e "${B}${C}  Claude Code Sandbox — Update Project${N}"
 echo -e "${D}  Template: $TEMPLATE_DIR${N}"
 echo -e "${D}  Project:  $TARGET_DIR${N}"
 echo ""

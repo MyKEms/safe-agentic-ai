@@ -1,5 +1,5 @@
 {
-  "name": "Safe Agentic AI (Claude Code)",
+  "name": "Claude Code Sandbox",
   "dockerComposeFile": "../docker-compose.yml",
   "service": "claude",
   "workspaceFolder": "/workspace",

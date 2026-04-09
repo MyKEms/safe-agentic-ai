@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-# setup.sh – Create and configure Safe Agentic AI projects
+# setup.sh – Create and configure Claude Code Sandbox projects
 # ─────────────────────────────────────────────────────────────────────────────
 # Template mode (no .env): scaffolds a new project folder, then configures it
 # Project mode  (.env exists): reconfigures the current project
@@ -21,7 +21,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # Triggers when there is no .env (we're in the clean template)
 if [ ! -f "$SCRIPT_DIR/.env" ] && [ "${1:-}" != "--configure" ]; then
   echo ""
-  echo -e "${B}${C}  Safe Agentic AI — New Project${N}"
+  echo -e "${B}${C}  Claude Code Sandbox — New Project${N}"
   echo -e "  ====================================="
   echo ""
   echo -e "  This is the template. It will create a new project folder for you."
@@ -68,7 +68,7 @@ if [ ! -f "$SCRIPT_DIR/.env" ] && [ "${1:-}" != "--configure" ]; then
   chmod +x "$TARGET_DIR/setup.sh" "$TARGET_DIR"/scripts/*.sh 2>/dev/null || true
 
   # Initialize git repo so config changes are tracked
-  (cd "$TARGET_DIR" && git init -q && git add -A && git commit -q -m "Initialize from safe-agentic-ai template")
+  (cd "$TARGET_DIR" && git init -q && git add -A && git commit -q -m "Initialize from claude-code-sandbox template")
 
   echo -e "  ${G}Project scaffolded.${N} Running configuration wizard..."
   echo ""
@@ -86,7 +86,7 @@ fi
 # ─────────────────────────────────────────────────────────────────────────────
 
 echo ""
-echo -e "${B}${C}  Safe Agentic AI — Project Setup${N}"
+echo -e "${B}${C}  Claude Code Sandbox — Project Setup${N}"
 echo -e "  ====================================="
 echo ""
 

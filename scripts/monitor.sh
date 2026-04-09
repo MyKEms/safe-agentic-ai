@@ -43,7 +43,7 @@ render() {
   local LINE
   LINE=$(printf '─%.0s' $(seq 1 "$COLS"))
 
-  echo -e "${B}${C}  Safe Agentic AI — Monitor${N}  ${D}$(date '+%Y-%m-%d %H:%M:%S')${N}"
+  echo -e "${B}${C}  Claude Code Sandbox — Monitor${N}  ${D}$(date '+%Y-%m-%d %H:%M:%S')${N}"
   echo -e "${D}${LINE}${N}"
 
   # ─── Containers overview ────────────────────────────────────────────────
