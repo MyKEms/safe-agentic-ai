@@ -94,7 +94,15 @@ echo ""
 case "$(uname -s)" in
   Darwin*)  PLATFORM="macos" ;;
   MINGW*|MSYS*|CYGWIN*) PLATFORM="windows" ;;
-  Linux*)   PLATFORM="linux" ;;
+  Linux*)
+    # Detect WSL (Windows Subsystem for Linux) - reports as Linux but
+    # SSH agent paths and Docker socket follow Windows conventions
+    if grep -qi microsoft /proc/version 2>/dev/null; then
+      PLATFORM="windows"
+    else
+      PLATFORM="linux"
+    fi
+    ;;
   *)        PLATFORM="linux" ;;
 esac
 
