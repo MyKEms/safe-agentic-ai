@@ -9,24 +9,24 @@ A containerized, security-first setup for running AI coding agents (Claude Code 
 
 ## Why This Exists
 
-I created this because I wanted an AI coding assistant that can work on my projects autonomously -- without installing random packages on my machine, without reaching servers I didn't approve, without me watching every step. Something simple but safe.
+I created this because I wanted an AI coding assistant that can work on my projects autonomously - without installing random packages on my machine, without reaching servers I didn't approve, without me watching every step. Something simple but safe.
 
-The only technology needed is **Dev Containers** -- a standard supported natively by VS Code (and other editors like JetBrains, Codespaces, etc.). No custom frameworks, no orchestration platforms, no cloud services. Just Docker and a proxy.
+The only technology needed is **Dev Containers** - a standard supported natively by VS Code (and other editors like JetBrains, Codespaces, etc.). No custom frameworks, no orchestration platforms, no cloud services. Just Docker and a proxy.
 
 ### The mindset
 
 **One project = one VS Code workspace = one Dev Container = one isolated environment.**
 
-Each project gets its own sandboxed container where Claude Code CLI runs with full permissions (`--dangerously-skip-permissions`). This is safe because the container has no direct internet access -- everything goes through an allowlist-only proxy. Claude can read, write, and execute anything inside the container, but it can only reach the domains you explicitly allow.
+Each project gets its own sandboxed container where Claude Code CLI runs with full permissions (`--dangerously-skip-permissions`). This is safe because the container has no direct internet access - everything goes through an allowlist-only proxy. Claude can read, write, and execute anything inside the container, but it can only reach the domains you explicitly allow.
 
-You give Claude a task. It works on it. You close VS Code, come back later, and pick up where you left off -- Claude remembers the context, your decisions, and the project state.
+You give Claude a task. It works on it. You close VS Code, come back later, and pick up where you left off - Claude remembers the context, your decisions, and the project state.
 
-**Important rule: always work inside the Dev Container, never mix environments.** Don't run Claude CLI on your host for a project that has a Dev Container. Don't mix host-side and container-side Claude sessions for the same project. The Dev Container is the workspace -- open it in VS Code, work there, keep it clean. This avoids session conflicts, memory confusion, and ensures the security isolation actually works.
+**Important rule: always work inside the Dev Container, never mix environments.** Don't run Claude CLI on your host for a project that has a Dev Container. Don't mix host-side and container-side Claude sessions for the same project. The Dev Container is the workspace - open it in VS Code, work there, keep it clean. This avoids session conflicts, memory confusion, and ensures the security isolation actually works.
 
 ### What it is
 
 - A single AI agent per project, working independently inside a container
-- Full autonomous mode -- safe because the container is network-isolated
+- Full autonomous mode - safe because the container is network-isolated
 - Each project gets its own workspace, proxy allowlist, and persistent Claude memory
 - Simple to set up: clone, run `setup.sh`, open in VS Code
 
@@ -38,7 +38,7 @@ You give Claude a task. It works on it. You close VS Code, come back later, and 
 
 ### Memory isolation
 
-Each project has its own Docker volume (`claude-state`) where Claude stores memory -- MEMORY.md, session history, learned preferences, project-specific knowledge. These are **never shared between projects**. When you switch between projects, each Claude instance remembers only its own context. Think of it as having a dedicated developer assistant per project who knows that project's codebase, conventions, and history -- and nothing else.
+Each project has its own Docker volume (`claude-state`) where Claude stores memory - MEMORY.md, session history, learned preferences, project-specific knowledge. These are **never shared between projects**. When you switch between projects, each Claude instance remembers only its own context. Think of it as having a dedicated developer assistant per project who knows that project's codebase, conventions, and history - and nothing else.
 
 ## Architecture
 
@@ -69,29 +69,29 @@ Each project has its own Docker volume (`claude-state`) where Claude stores memo
                      (1Password / Keeper / custom)
 ```
 
-Two Docker networks. The workspace container has **zero direct internet access** -- every outbound request must pass through the Squid proxy, which enforces a domain allowlist (~50 domains). Anything not on the list is dropped.
+Two Docker networks. The workspace container has **zero direct internet access** - every outbound request must pass through the Squid proxy, which enforces a domain allowlist (~50 domains). Anything not on the list is dropped.
 
 This means `--dangerously-skip-permissions` is safe to use: the agent has freedom inside a locked box.
 
 ## Prerequisites
 
-1. **Docker runtime** — one of:
-   - **OrbStack** (recommended for macOS) — [orbstack.dev](https://orbstack.dev/) — faster, lighter, drop-in Docker Desktop replacement
-   - **Docker Desktop** — [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/) (macOS, Windows, Linux)
-2. **VS Code** — [code.visualstudio.com/Download](https://code.visualstudio.com/Download)
-3. **Dev Containers extension** — install from VS Code: `ms-vscode-remote.remote-containers`
-4. **Claude CLI** (optional, for host-side debugging) — `npm install -g @anthropic-ai/claude-code` or `brew install claude-code`
+1. **Docker runtime** - one of:
+   - **OrbStack** (recommended for macOS) - [orbstack.dev](https://orbstack.dev/) - faster, lighter, drop-in Docker Desktop replacement
+   - **Docker Desktop** - [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/) (macOS, Windows, Linux)
+2. **VS Code** - [code.visualstudio.com/Download](https://code.visualstudio.com/Download)
+3. **Dev Containers extension** - install from VS Code: `ms-vscode-remote.remote-containers`
+4. **Claude CLI** (optional, for host-side debugging) - `npm install -g @anthropic-ai/claude-code` or `brew install claude-code`
 
 ## Quick Start
 
-**Step 1 — Clone the template (once):**
+**Step 1 - Clone the template (once):**
 
 ```bash
 git clone https://github.com/MyKEms/safe-agentic-ai.git
 cd safe-agentic-ai
 ```
 
-**Step 2 — Create a project:**
+**Step 2 - Create a project:**
 
 macOS / Linux:
 ```bash
@@ -105,7 +105,7 @@ bash setup.sh ~/my-project-agent
 
 This copies the template to a new folder, runs the configuration wizard, and initializes a git repo. Each project gets its own `.env`, proxy allowlist, and uniquely named containers.
 
-**Step 3 — Open the project in VS Code:**
+**Step 3 - Open the project in VS Code:**
 
 ```bash
 code ~/my-project-agent
@@ -115,27 +115,27 @@ Then: `Cmd+Shift+P` (macOS) or `Ctrl+Shift+P` (Windows) → type **"Dev Containe
 
 Wait for the build to finish (first time takes ~2 minutes, subsequent starts are instant).
 
-**Step 4 — Open a terminal inside the container:**
+**Step 4 - Open a terminal inside the container:**
 
-VS Code will show several terminal tabs at the bottom (Configuring..., Dev Containers). **Ignore those** — they are build logs.
+VS Code will show several terminal tabs at the bottom (Configuring..., Dev Containers). **Ignore those** - they are build logs.
 
 Click the **`+`** button in the terminal panel to open a new terminal. You're now inside the container at `/workspace`.
 
-**Step 5 — Start Claude:**
+**Step 5 - Start Claude:**
 
 ```bash
 ccd
 ```
 
-This launches Claude CLI in autonomous mode (`--dangerously-skip-permissions` — safe because you're inside the isolated container).
+This launches Claude CLI in autonomous mode (`--dangerously-skip-permissions` - safe because you're inside the isolated container).
 
 On first run, Claude will ask you to authenticate. Follow the browser link, paste the code back. Your token persists across container restarts and rebuilds.
 
-**Step 6 — Pick a model and start prompting:**
+**Step 6 - Pick a model and start prompting:**
 
 Inside Claude CLI, type `/model` to select your preferred model and effort level. You're ready to go.
 
-> **Tip:** For smoother auth, run `claude login` on your **host machine** first — credentials are automatically copied into the container on every start. See [Authentication](#authentication) for details.
+> **Tip:** For smoother auth, run `claude login` on your **host machine** first - credentials are automatically copied into the container on every start. See [Authentication](#authentication) for details.
 
 ## Template vs Project
 
@@ -153,7 +153,7 @@ Each project gets:
 - Its own `.env` with credentials and paths
 - Its own `proxy/allowed-domains.txt` with project-specific domains
 - Uniquely named containers (`<name>-workspace`, `<name>-proxy`) so multiple projects run side by side
-- Its own `claude-state` Docker volume with isolated Claude memory (MEMORY.md, sessions, preferences) -- never shared between projects
+- Its own `claude-state` Docker volume with isolated Claude memory (MEMORY.md, sessions, preferences) - never shared between projects
 - Its own git repo for tracking config changes
 
 **To reconfigure** an existing project, run `./setup.sh` inside the project folder (it detects `.env` and enters reconfigure mode).
@@ -188,11 +188,11 @@ Your `.env`, custom domains, and workspace files are preserved.
 
 The workspace container sits on an internal network with **no internet route**. The only way out is through the Squid proxy, which checks every request against `allowed-domains.txt`. Anything not on the list is dropped.
 
-- **Network isolation** — workspace can only talk to the proxy, nothing else
-- **Allowlist-only egress** — HTTP, HTTPS, and SSH CONNECT checked against the domain list
-- **Resource limits** — memory and CPU caps via Docker Compose (configurable in `.env`)
-- **No credential leakage** — API keys injected as env vars at runtime, never baked into the image
-- **SSH agent forwarding** — private keys stay in your password manager, only the socket is mounted
+- **Network isolation** - workspace can only talk to the proxy, nothing else
+- **Allowlist-only egress** - HTTP, HTTPS, and SSH CONNECT checked against the domain list
+- **Resource limits** - memory and CPU caps via Docker Compose (configurable in `.env`)
+- **No credential leakage** - API keys injected as env vars at runtime, never baked into the image
+- **SSH agent forwarding** - private keys stay in your password manager, only the socket is mounted
 
 ## Aliases & Commands
 
@@ -256,7 +256,7 @@ Three levels of cleanup via `wipe.sh`:
 ./scripts/wipe.sh --nuclear
 ```
 
-Hard and nuclear wipe destroy the `claude-state` volume -- all Claude memory (MEMORY.md, memory files), session history, and project data are permanently lost. The script warns before proceeding and shows how to inspect memory first.
+Hard and nuclear wipe destroy the `claude-state` volume - all Claude memory (MEMORY.md, memory files), session history, and project data are permanently lost. The script warns before proceeding and shows how to inspect memory first.
 
 **Never touched** by any level: `.env`, `proxy/allowed-domains.txt`, `~/.ssh/`, host `~/.claude/`.
 
@@ -275,7 +275,7 @@ On first run in a new project, Claude CLI may still prompt for auth inside the c
 
 **API key fallback:**
 
-Set `ANTHROPIC_API_KEY` in `.env`. The key is injected as an environment variable at runtime -- never written to disk inside the container.
+Set `ANTHROPIC_API_KEY` in `.env`. The key is injected as an environment variable at runtime - never written to disk inside the container.
 
 ## SSH Agent Setup
 
@@ -337,7 +337,7 @@ The `setup.sh` wizard scaffolds a project folder, auto-detects your platform, an
 
 ## Troubleshooting
 
-> **Best debugging tip:** If something isn't working, open a **regular terminal on your host** and ask Claude CLI (without dangerous mode) to help you debug. Paste the error, describe what happened — it will read docker logs, inspect configs, and fix the issue for you. This is the fastest way to solve any devcontainer problem. Example:
+> **Best debugging tip:** If something isn't working, open a **regular terminal on your host** and ask Claude CLI (without dangerous mode) to help you debug. Paste the error, describe what happened - it will read docker logs, inspect configs, and fix the issue for you. This is the fastest way to solve any devcontainer problem. Example:
 >
 > ```bash
 > # On your host (not inside the container):
@@ -349,7 +349,7 @@ The `setup.sh` wizard scaffolds a project folder, auto-detects your platform, an
 
 **Playwright / browser errors: `ERR_TUNNEL_CONNECTION_FAILED`**
 
-This is the proxy working as intended. The domain you're trying to reach is not in `proxy/allowed-domains.txt`. Playwright routes all traffic through Squid — if a domain isn't allowlisted, it gets blocked.
+This is the proxy working as intended. The domain you're trying to reach is not in `proxy/allowed-domains.txt`. Playwright routes all traffic through Squid - if a domain isn't allowlisted, it gets blocked.
 
 Add the domain **from the host**:
 
@@ -369,7 +369,7 @@ These are harmless. VS Code tries to check for extension updates through the pro
 docker compose logs    # all containers
 ```
 
-Check for port conflicts (Squid default: 3128) or missing `.env` file. If stuck, ask Claude on the host to help — paste the error and it will diagnose it.
+Check for port conflicts (Squid default: 3128) or missing `.env` file. If stuck, ask Claude on the host to help - paste the error and it will diagnose it.
 
 **"Connection refused" from workspace**
 
@@ -389,7 +389,7 @@ The domain isn't in `proxy/allowed-domains.txt`. Add it **from the host** (not f
 
 **Claude CLI can't authenticate**
 
-First try `claude login` on your **host machine** and restart the container -- credentials are copied from host on every start. If that doesn't work, run `claude login` inside the container. If using an API key, check that `ANTHROPIC_API_KEY` is set in `.env` and restart after changing it.
+First try `claude login` on your **host machine** and restart the container - credentials are copied from host on every start. If that doesn't work, run `claude login` inside the container. If using an API key, check that `ANTHROPIC_API_KEY` is set in `.env` and restart after changing it.
 
 **SSH not working**
 
