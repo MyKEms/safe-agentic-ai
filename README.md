@@ -131,19 +131,11 @@ This launches Claude CLI in autonomous mode (`--dangerously-skip-permissions` �
 
 On first run, Claude will ask you to authenticate. Follow the browser link, paste the code back. Your token persists across container restarts and rebuilds.
 
-**Step 6 — Switch to the best model:**
+**Step 6 — Pick a model and start prompting:**
 
-Inside Claude CLI, type:
+Inside Claude CLI, type `/model` to select your preferred model and effort level. You're ready to go.
 
-```
-/model
-```
-
-Select **Opus** (usually the default), then press the **right arrow key** to set effort to **MAX**.
-
-You're ready. Start prompting.
-
-> **Tip:** Run `claude login` on your **host machine** — credentials are automatically copied into the container on every start. After the first authentication inside the container, the token persists across restarts and rebuilds (stored in a Docker volume with a stable machine identity).
+> **Tip:** For smoother auth, run `claude login` on your **host machine** first — credentials are automatically copied into the container on every start. See [Authentication](#authentication) for details.
 
 ## Template vs Project
 
@@ -194,19 +186,13 @@ Your `.env`, custom domains, and workspace files are preserved.
 
 ## How It Works
 
-The security model is simple:
+The workspace container sits on an internal network with **no internet route**. The only way out is through the Squid proxy, which checks every request against `allowed-domains.txt`. Anything not on the list is dropped.
 
-1. **Network isolation.** The workspace container is on `claude-net`, which has no route to the internet. The only peer on that network is the proxy container.
-
-2. **Allowlist-only egress.** The proxy container runs Squid configured with `allowed-domains.txt`. HTTP, HTTPS, and SSH CONNECT requests are checked against this list. Everything else is denied.
-
-3. **Resource limits.** Memory and CPU caps are enforced via Docker Compose, configurable in `.env`.
-
-4. **SSH tunneling.** SSH connections route through Squid CONNECT to trusted hosts only. Your private keys never leave your password manager -- only the agent socket is mounted.
-
-5. **No credential leakage.** API keys are injected via environment variables at runtime, never baked into the image.
-
-The result: Claude CLI can run with full permissions (`--dangerously-skip-permissions`) because the blast radius is contained. It can read, write, and execute anything inside the container -- but it can only reach the domains you explicitly allow.
+- **Network isolation** — workspace can only talk to the proxy, nothing else
+- **Allowlist-only egress** — HTTP, HTTPS, and SSH CONNECT checked against the domain list
+- **Resource limits** — memory and CPU caps via Docker Compose (configurable in `.env`)
+- **No credential leakage** — API keys injected as env vars at runtime, never baked into the image
+- **SSH agent forwarding** — private keys stay in your password manager, only the socket is mounted
 
 ## Aliases & Commands
 
@@ -435,16 +421,18 @@ safe-agentic-ai/
 │   ├── squid.conf              # Squid proxy (allowlist-only, default deny)
 │   └── allowed-domains.txt     # Domain allowlist (~50 domains)
 ├── scripts/
-│   ├── setup-container.sh      # One-time postCreateCommand
-│   ├── welcome.sh              # Startup banner (postStartCommand)
+│   ├── preflight.sh            # Host-side checks before build
+│   ├── setup-container.sh      # One-time container init (postCreateCommand)
+│   ├── welcome.sh              # Startup banner + auth refresh (postStartCommand)
 │   ├── watchdog.sh             # Auto-restart wrapper for long agents
 │   ├── monitor.sh              # Live dashboard (run from host)
-│   ├── proxy-ctl.sh            # Manage proxy allowlist
+│   ├── proxy-ctl.sh            # Manage proxy allowlist (run from host)
 │   └── wipe.sh                 # Clean reset (3 levels: soft/hard/nuclear)
-├── workspace/                  # Shared folder (host <-> container)
-├── docker-compose.yml          # Two containers: proxy + workspace
+├── workspace/                  # Default shared folder (host <-> container)
+├── docker-compose.yml          # Two containers + volumes: proxy + workspace
 ├── .env.example                # Configuration template
-├── setup.sh                    # Template scaffolding + project configuration
+├── setup.sh                    # Template scaffolding + project wizard
+├── update.sh                   # Sync latest template into existing projects
 └── README.md
 ```
 
