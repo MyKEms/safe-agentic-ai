@@ -351,7 +351,20 @@ echo ""
 echo -e "${B}  Next steps:${N}"
 echo ""
 echo "  1. Open this project folder in VS Code:"
-echo "     code $PROJECT_DIR"
+if [ "$PLATFORM" = "windows" ]; then
+  # Convert WSL path to \\wsl$ UNC path for Windows VS Code
+  WSL_DISTRO=$(grep -oP 'DISTRIB_CODENAME=\K.*' /etc/lsb-release 2>/dev/null || wslpath -m / 2>/dev/null | head -c0 || true)
+  WSL_NAME=$(basename "$(grep -oP '(?<=^ID=).*' /etc/os-release 2>/dev/null | head -1)" 2>/dev/null || echo "Ubuntu")
+  # Capitalize first letter
+  WSL_NAME="$(echo "${WSL_NAME:0:1}" | tr '[:lower:]' '[:upper:]')${WSL_NAME:1}"
+  echo "     From WSL:        code $PROJECT_DIR"
+  echo "     From PowerShell: code \\\\\\\\wsl\$\\\\${WSL_NAME}${PROJECT_DIR}"
+  echo ""
+  echo -e "  ${D}  Tip: create projects on /mnt/c/... to avoid WSL path issues:${N}"
+  echo -e "  ${D}  bash setup.sh /mnt/c/Users/\$USER/my-project${N}"
+else
+  echo "     code $PROJECT_DIR"
+fi
 echo ""
 echo "  2. Reopen in container:"
 echo "     Cmd+Shift+P (macOS) / Ctrl+Shift+P (Windows)"

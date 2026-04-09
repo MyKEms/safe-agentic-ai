@@ -351,6 +351,7 @@ The `setup.sh` wizard scaffolds a project folder, auto-detects your platform, an
 - Run `setup.sh` from Git Bash or WSL2 terminal
 - Docker Desktop must be running with WSL2 backend
 - For 1Password SSH agent forwarding, enable WSL Integration in Docker Desktop settings
+- **Project path matters**: create projects on `/mnt/c/Users/YourName/...` (Windows filesystem) so VS Code can open them directly. Projects created on the WSL filesystem (`~/...`) require `\\wsl$\Ubuntu\...` paths from Windows
 
 ## Troubleshooting
 
