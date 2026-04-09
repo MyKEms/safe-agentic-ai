@@ -80,6 +80,17 @@ if docker info &>/dev/null; then
   fi
 fi
 
+# ─── Check Claude config directory exists ────────────────────────────────────
+# The container mounts this directory read-only for auth file staging.
+CLAUDE_CFG=$(grep '^CLAUDE_CONFIG_PATH=' .env 2>/dev/null | cut -d= -f2 | tr -d '"' | tr -d "'")
+CLAUDE_CFG="${CLAUDE_CFG:-$HOME/.claude}"
+
+if [ ! -d "$CLAUDE_CFG" ]; then
+  mkdir -p "$CLAUDE_CFG"
+  echo -e "  ${Y}Created ${CLAUDE_CFG}${N}"
+  echo -e "  ${D}Run 'claude login' on host for OAuth (or set ANTHROPIC_API_KEY in .env)${N}"
+fi
+
 # ─── Result ──────────────────────────────────────────────────────────────────
 if [ "$ERRORS" -eq 0 ]; then
   echo -e "${G}  Preflight checks passed${N}"

@@ -48,6 +48,7 @@ services:
       context: .
       dockerfile: .devcontainer/Dockerfile
     container_name: ${PROJECT_NAME:-claude}-workspace
+    hostname: ${PROJECT_NAME:-claude}-workspace
     depends_on:
       proxy:
         condition: service_healthy
@@ -57,10 +58,15 @@ services:
     volumes:
       # --- Your repos (read-write) ---
       - ${WORKSPACE_PATH}:/workspace:cached
-      # --- Claude CLI config (shared from host for auth) ---
-      # Login on host with: claude login
-      # Token is shared via this mount (~24h expiry, re-login on host when needed)
-      - ${CLAUDE_CONFIG_PATH:-~/.claude}:/home/vscode/.claude
+      # --- Claude CLI state (persistent per project) ---
+      # Named volume keeps sessions, memory, and project data across rebuilds.
+      # Isolated per project (Docker Compose prefixes with project name).
+      - claude-state:/home/vscode/.claude
+      # --- Host Claude config (read-only staging) ---
+      # Mounted read-only so init scripts can copy auth files into the
+      # volume. Only credentials and settings are copied — sessions and
+      # project data stay isolated in the volume.
+      - ${CLAUDE_CONFIG_PATH:-~/.claude}:/home/vscode/.claude-host:ro
       # --- SSH agent socket (1Password, Keeper, or custom) ---
       # Long-form syntax required — 1Password path contains spaces
       - type: bind
@@ -124,3 +130,4 @@ networks:
 volumes:
   squid-cache:
   claude-cache:
+  claude-state:

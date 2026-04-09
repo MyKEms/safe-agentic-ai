@@ -2,6 +2,39 @@
 
 A containerized, security-first setup for running AI coding agents (Claude Code CLI) safely on your machine.
 
+## Why This Exists
+
+I created this because I wanted an AI coding assistant that can work on my projects autonomously -- without installing random packages on my machine, without reaching servers I didn't approve, without me watching every step. Something simple but safe.
+
+The only technology needed is **Dev Containers** -- a standard supported natively by VS Code (and other editors like JetBrains, Codespaces, etc.). No custom frameworks, no orchestration platforms, no cloud services. Just Docker and a proxy.
+
+### The mindset
+
+**One project = one VS Code workspace = one Dev Container = one isolated environment.**
+
+Each project gets its own sandboxed container where Claude Code CLI runs with full permissions (`--dangerously-skip-permissions`). This is safe because the container has no direct internet access -- everything goes through an allowlist-only proxy. Claude can read, write, and execute anything inside the container, but it can only reach the domains you explicitly allow.
+
+You give Claude a task. It works on it. You close VS Code, come back later, and pick up where you left off -- Claude remembers the context, your decisions, and the project state.
+
+**Important rule: always work inside the Dev Container, never mix environments.** Don't run Claude CLI on your host for a project that has a Dev Container. Don't mix host-side and container-side Claude sessions for the same project. The Dev Container is the workspace -- open it in VS Code, work there, keep it clean. This avoids session conflicts, memory confusion, and ensures the security isolation actually works.
+
+### What it is
+
+- A single AI agent per project, working independently inside a container
+- Full autonomous mode -- safe because the container is network-isolated
+- Each project gets its own workspace, proxy allowlist, and persistent Claude memory
+- Simple to set up: clone, run `setup.sh`, open in VS Code
+
+### What it is not
+
+- Not a multi-agent coordination platform
+- Not an AI framework or SDK
+- Not a cloud deployment tool
+
+### Memory isolation
+
+Each project has its own Docker volume (`claude-state`) where Claude stores memory -- MEMORY.md, session history, learned preferences, project-specific knowledge. These are **never shared between projects**. When you switch between projects, each Claude instance remembers only its own context. Think of it as having a dedicated developer assistant per project who knows that project's codebase, conventions, and history -- and nothing else.
+
 ## Architecture
 
 ```
@@ -91,7 +124,7 @@ ccd
 
 This launches Claude CLI in autonomous mode (`--dangerously-skip-permissions` — safe because you're inside the isolated container).
 
-On first run, Claude will ask you to authenticate. Follow the browser link, paste the code back. Your token is stored in `~/.claude` (shared from host) and persists across restarts.
+On first run, Claude will ask you to authenticate. Follow the browser link, paste the code back. Your token persists across container restarts and rebuilds.
 
 **Step 6 — Switch to the best model:**
 
@@ -105,7 +138,7 @@ Select **Opus** (usually the default), then press the **right arrow key** to set
 
 You're ready. Start prompting.
 
-> **Tip:** Claude auth is shared from your host's `~/.claude`. Run `claude login` on your **host machine** — the token is mounted into the container. Tokens expire ~24h; re-run on host when needed.
+> **Tip:** Run `claude login` on your **host machine** — credentials are automatically copied into the container on every start. After the first authentication inside the container, the token persists across restarts and rebuilds (stored in a Docker volume with a stable machine identity).
 
 ## Template vs Project
 
@@ -123,6 +156,7 @@ Each project gets:
 - Its own `.env` with credentials and paths
 - Its own `proxy/allowed-domains.txt` with project-specific domains
 - Uniquely named containers (`<name>-workspace`, `<name>-proxy`) so multiple projects run side by side
+- Its own `claude-state` Docker volume with isolated Claude memory (MEMORY.md, sessions, preferences) -- never shared between projects
 - Its own git repo for tracking config changes
 
 **To reconfigure** an existing project, run `./setup.sh` inside the project folder (it detects `.env` and enters reconfigure mode).
@@ -149,6 +183,7 @@ Your `.env`, custom domains, and workspace files are preserved.
 | `<name>-workspace` | Ubuntu 24.04 + Node 20 + Claude CLI + Playwright + 1Password CLI |
 | `claude-net` | Internal Docker network (no internet) |
 | `proxy-egress` | Proxy-only network with internet access |
+| `claude-state` (volume) | Persistent Claude CLI state: memory, sessions, auth tokens |
 | `workspace/` | Shared folder between host and container |
 | `proxy/allowed-domains.txt` | Domain allowlist for egress |
 
@@ -218,11 +253,11 @@ Shows resource usage, proxy logs, active connections, and blocked requests in re
 
 Three levels of cleanup via `wipe.sh`:
 
-| Level | What it does |
-|---|---|
-| `--soft` | Clears container sessions, MCP config, temp files. Credentials untouched. |
-| `--hard` | Soft + destroys containers, volumes, images. **Claude credentials lost** — re-login needed. |
-| `--nuclear` | Hard + destroys everything. Only `.env` and proxy config survive. |
+| Level | What it does | Claude Memory |
+|---|---|---|
+| `--soft` | Clears sessions, MCP config, temp files | **Kept** |
+| `--hard` | Containers, volumes, images destroyed | **Destroyed** |
+| `--nuclear` | Everything destroyed | **Destroyed** |
 
 ```bash
 ./scripts/wipe.sh --soft
@@ -230,18 +265,22 @@ Three levels of cleanup via `wipe.sh`:
 ./scripts/wipe.sh --nuclear
 ```
 
-**Never touched** by any level: `.env`, `proxy/allowed-domains.txt`, `~/.ssh/`.
+Hard and nuclear wipe destroy the `claude-state` volume -- all Claude memory (MEMORY.md, memory files), session history, and project data are permanently lost. The script warns before proceeding and shows how to inspect memory first.
+
+**Never touched** by any level: `.env`, `proxy/allowed-domains.txt`, `~/.ssh/`, host `~/.claude/`.
 
 ## Authentication
 
-**OAuth (recommended):**
+**Recommended: authenticate on host first.**
 
 ```bash
-# Inside the container:
+# On your host machine (not inside the container):
 claude login
 ```
 
-Or run `claude login` on your **host machine** — the token is shared into the container via mount.
+Host credentials (`~/.claude/`) are mounted read-only into the container and copied into the `claude-state` volume on every start. A stable machine identity is persisted in the volume so auth survives container rebuilds.
+
+On first run in a new project, Claude CLI may still prompt for auth inside the container. After that, the token is stored in the volume and persists across restarts and rebuilds.
 
 **API key fallback:**
 
@@ -359,7 +398,7 @@ The domain isn't in `proxy/allowed-domains.txt`. Add it **from the host** (not f
 
 **Claude CLI can't authenticate**
 
-Run `claude login` again inside the container. If using an API key, check that `ANTHROPIC_API_KEY` is set in `.env` and restart the container after changing it.
+First try `claude login` on your **host machine** and restart the container -- credentials are copied from host on every start. If that doesn't work, run `claude login` inside the container. If using an API key, check that `ANTHROPIC_API_KEY` is set in `.env` and restart after changing it.
 
 **SSH not working**
 

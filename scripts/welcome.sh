@@ -13,9 +13,39 @@ C="\033[36m"
 N="\033[0m"
 
 # ─── Fix ownership & permissions ────────────────────────────────────────────
-sudo chown -R vscode:vscode /home/vscode/.claude 2>/dev/null
+sudo chown -R vscode:vscode /home/vscode/.claude 2>/dev/null || true
 sudo chown -R vscode:vscode /home/vscode/.cache 2>/dev/null
 sudo chmod 777 /home/vscode/.ssh-agent/agent.sock 2>/dev/null || true
+
+# ─── Refresh auth files from host on every start ────────────────────────────
+# Copy fresh credentials and settings from the read-only host mount.
+HOST_DIR="/home/vscode/.claude-host"
+CLAUDE_DIR="/home/vscode/.claude"
+if [ -d "$HOST_DIR" ]; then
+  for f in .credentials.json settings.json; do
+    if [ -f "$HOST_DIR/$f" ]; then
+      cp "$HOST_DIR/$f" "$CLAUDE_DIR/$f"
+      chown vscode:vscode "$CLAUDE_DIR/$f"
+      chmod 600 "$CLAUDE_DIR/$f"
+    fi
+  done
+fi
+
+# ─── Restore stable machine identity ────────────────────────────────────────
+SAVED_MID="$CLAUDE_DIR/.machine-id"
+if [ -f "$SAVED_MID" ]; then
+  sudo cp "$SAVED_MID" /etc/machine-id
+fi
+
+# ─── Restore .claude.json if lost (e.g. after rebuild) ─────────────────────
+CLAUDE_JSON="/home/vscode/.claude.json"
+if [ ! -f "$CLAUDE_JSON" ]; then
+  BACKUP=$(ls -t "$CLAUDE_DIR"/backups/.claude.json.backup.* 2>/dev/null | head -1)
+  if [ -n "$BACKUP" ]; then
+    cp "$BACKUP" "$CLAUDE_JSON"
+    chown vscode:vscode "$CLAUDE_JSON"
+  fi
+fi
 
 # ─── Banner ─────────────────────────────────────────────────────────────────
 echo ""
@@ -55,6 +85,16 @@ if command -v op &>/dev/null; then
   fi
 else
   echo -e "${D}not installed${N}"
+fi
+
+# Claude auth
+echo -e -n "  ${B}Auth:${N}        "
+if [ -f "$CLAUDE_DIR/.credentials.json" ] && grep -q '"accessToken"' "$CLAUDE_DIR/.credentials.json" 2>/dev/null; then
+  echo -e "${G}OAuth (from host)${N}"
+elif [ -n "${ANTHROPIC_API_KEY:-}" ]; then
+  echo -e "${G}API key${N}"
+else
+  echo -e "${R}not configured${N} — run 'claude login' on host"
 fi
 
 # Proxy

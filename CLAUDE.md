@@ -50,7 +50,7 @@ Host machine
 
 - All sensitive values (API keys, paths, git identity) live in `.env`, never hardcoded
 - `.env` is gitignored — never committed
-- Claude CLI credentials are shared from host `~/.claude` via bind mount (login on host, token auto-shared)
+- Claude CLI auth: host `~/.claude/` is mounted read-only to `/home/vscode/.claude-host/`. Init scripts copy credentials and settings into the `claude-state` volume on every start. All other CLI state (sessions, memory, projects) lives in the named volume, isolated per project. A stable machine-id is persisted in the volume to prevent auth invalidation across rebuilds.
 - Scripts in `scripts/` are mounted read-only into the container
 - Proxy config is mounted read-only
 - SSH keys are mounted read-only; SSH agent socket is the preferred method
@@ -58,6 +58,50 @@ Host machine
 - This repo is a template — never open it directly as a devcontainer; use `setup.sh <path>` to create project folders
 - Each project must have its own folder — do not share `.env` or `allowed-domains.txt` between projects
 - All shell scripts use `#!/usr/bin/env bash` and must keep LF line endings (enforced by `.gitattributes`)
+
+## Claude CLI State & Memory
+
+Two separate `.claude` directories exist inside the container — don't confuse them:
+
+| Path | What it is | Visible in VS Code | Persistent |
+|---|---|---|---|
+| `/workspace/.claude/` | Project settings (`settings.local.json`) | Yes | In workspace mount |
+| `/home/vscode/.claude/` | CLI home (auth, sessions, **memory**, projects) | No | In `claude-state` volume |
+
+Claude Code stores memory, sessions, and project data in its home config dir (`/home/vscode/.claude/projects/-workspace/memory/`), **not** in the workspace. This is by design:
+- Memory files are personal AI state, not project code — they don't belong in git
+- Each container project gets its own isolated `claude-state` Docker volume
+- Auth credentials (`.credentials.json`) are the only thing shared from the host — everything else is container-local
+
+**Wipe impact on memory:**
+
+| Wipe level | Memory | Sessions | Credentials | Workspace |
+|---|---|---|---|---|
+| **Soft** (`wipe --soft`) | KEPT | Cleared | KEPT | KEPT |
+| **Hard** (`wipe --hard`) | **DESTROYED** | **DESTROYED** | KEPT (on host) | KEPT |
+| **Nuclear** (`wipe --nuclear`) | **DESTROYED** | **DESTROYED** | KEPT (on host) | KEPT |
+
+Hard and nuclear wipe run `docker compose down -v` which destroys the `claude-state` volume. All memory files (MEMORY.md, memory files), session history, and project data are permanently lost. The wipe script warns about this before proceeding.
+
+To inspect memory from inside the container:
+```bash
+ls /home/vscode/.claude/projects/-workspace/memory/
+cat /home/vscode/.claude/projects/-workspace/memory/MEMORY.md
+```
+
+## Authentication
+
+**Recommended flow: authenticate on host, share into container.**
+
+1. Run `claude login` on the host — this stores OAuth tokens in `~/.claude/.credentials.json`
+2. The credentials file is bind-mounted into the container automatically
+3. Claude CLI inside the container uses the shared token — no OAuth needed
+
+**Why not authenticate inside the container?** OAuth callback flow (browser → localhost redirect → CLI) is unreliable through VS Code's port forwarding. The redirect chain can hang because the callback needs to traverse: host browser → VS Code port forward → Docker network → container. Authenticating on the host avoids this entirely.
+
+**Fallback: API key.** Set `ANTHROPIC_API_KEY` in `.env` if OAuth isn't an option.
+
+The `welcome.sh` banner shows auth status on every container start. If it shows "not configured", run `claude login` on the host and restart the container.
 
 ## 1Password CLI Support
 

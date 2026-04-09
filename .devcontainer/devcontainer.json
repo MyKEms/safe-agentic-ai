@@ -34,6 +34,6 @@
 
   "forwardPorts": [],
   "otherPortsAttributes": {
-    "onAutoForward": "notify"
+    "onAutoForward": "silent"
   }
 }
