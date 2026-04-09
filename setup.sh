@@ -352,16 +352,20 @@ echo -e "${B}  Next steps:${N}"
 echo ""
 echo "  1. Open this project folder in VS Code:"
 if [ "$PLATFORM" = "windows" ]; then
-  # Convert WSL path to \\wsl$ UNC path for Windows VS Code
-  WSL_DISTRO=$(grep -oP 'DISTRIB_CODENAME=\K.*' /etc/lsb-release 2>/dev/null || wslpath -m / 2>/dev/null | head -c0 || true)
-  WSL_NAME=$(basename "$(grep -oP '(?<=^ID=).*' /etc/os-release 2>/dev/null | head -1)" 2>/dev/null || echo "Ubuntu")
-  # Capitalize first letter
-  WSL_NAME="$(echo "${WSL_NAME:0:1}" | tr '[:lower:]' '[:upper:]')${WSL_NAME:1}"
-  echo "     From WSL:        code $PROJECT_DIR"
-  echo "     From PowerShell: code \\\\\\\\wsl\$\\\\${WSL_NAME}${PROJECT_DIR}"
-  echo ""
-  echo -e "  ${D}  Tip: create projects on /mnt/c/... to avoid WSL path issues:${N}"
-  echo -e "  ${D}  bash setup.sh /mnt/c/Users/\$USER/my-project${N}"
+  if [[ "$PROJECT_DIR" == /mnt/* ]]; then
+    # Project is on Windows filesystem - works directly
+    WIN_PATH=$(wslpath -w "$PROJECT_DIR" 2>/dev/null || echo "$PROJECT_DIR")
+    echo "     code \"$WIN_PATH\""
+  else
+    # Project is on WSL filesystem - needs special handling
+    echo "     Open a WSL terminal and run: code $PROJECT_DIR"
+    echo ""
+    echo -e "  ${Y}  Note: this project is on the WSL filesystem.${N}"
+    echo -e "  ${Y}  VS Code must be opened from WSL bash, not from PowerShell.${N}"
+    echo ""
+    echo -e "  ${D}  For easier access, create projects on the Windows filesystem:${N}"
+    echo -e "  ${D}  bash setup.sh /mnt/c/Users/\$USER/my-project${N}"
+  fi
 else
   echo "     code $PROJECT_DIR"
 fi
