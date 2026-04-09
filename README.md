@@ -27,7 +27,7 @@ You give Claude a task. It works on it. You close VS Code, come back later, and 
 
 ### What it is
 
-- A single AI agent per project, working independently inside a container
+- One Claude Code CLI instance per project, working independently inside a container
 - Full autonomous mode - safe because the container is network-isolated
 - Each project gets its own workspace, proxy allowlist, and persistent Claude memory
 - Simple to set up: clone, run `setup.sh`, open in VS Code
