@@ -40,7 +40,7 @@ fi
 # ─── Restore .claude.json if lost (e.g. after rebuild) ─────────────────────
 CLAUDE_JSON="/home/vscode/.claude.json"
 if [ ! -f "$CLAUDE_JSON" ]; then
-  BACKUP=$(ls -t "$CLAUDE_DIR"/backups/.claude.json.backup.* 2>/dev/null | head -1)
+  BACKUP=$(ls -t "$CLAUDE_DIR"/backups/.claude.json.backup.* 2>/dev/null | head -1 || true)
   if [ -n "$BACKUP" ]; then
     cp "$BACKUP" "$CLAUDE_JSON"
     chown vscode:vscode "$CLAUDE_JSON"
