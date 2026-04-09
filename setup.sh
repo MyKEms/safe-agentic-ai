@@ -195,6 +195,9 @@ case "$AGENT_CHOICE" in
     esac
     if [ -e "$SSH_SOCK_DEFAULT" ]; then
       echo -e "  ${G}Socket found at default path.${N}"
+    elif [ "$PLATFORM" = "windows" ]; then
+      echo -e "  ${D}Socket is provided by Docker Desktop inside the container.${N}"
+      echo -e "  ${D}It won't be visible from WSL — this is normal.${N}"
     else
       echo -e "  ${Y}Socket not found at default path — is the SSH agent enabled?${N}"
     fi
