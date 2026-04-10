@@ -67,7 +67,7 @@ services:
       # volume. Only credentials and settings are copied — sessions and
       # project data stay isolated in the volume.
       - ${CLAUDE_CONFIG_PATH:-~/.claude}:/home/vscode/.claude-host:ro
-      # --- SSH agent socket (1Password, Keeper, or custom) ---
+      # --- SSH agent socket (1Password, Bitwarden, or custom) ---
       # Long-form syntax required — 1Password path contains spaces
       - type: bind
         source: ${SSH_AGENT_SOCK_HOST:-/dev/null}

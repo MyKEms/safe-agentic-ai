@@ -176,18 +176,46 @@ echo -e "${B}  SSH Agent${N}"
 echo ""
 echo "  Which SSH agent do you use?"
 echo -e "    ${C}1)${N} 1Password"
-echo -e "    ${C}2)${N} Keeper PAM"
-echo -e "    ${C}3)${N} Custom (other SSH agent)"
-echo -e "    ${C}4)${N} None / skip"
+if [ "$PLATFORM" != "windows" ]; then
+  echo -e "    ${C}2)${N} Bitwarden"
+  echo -e "    ${C}3)${N} Custom (other SSH agent)"
+  echo -e "    ${C}4)${N} None / skip"
+  DEFAULT_CHOICE=4
+else
+  echo -e "    ${C}2)${N} Custom (other SSH agent)"
+  echo -e "    ${C}3)${N} None / skip"
+  DEFAULT_CHOICE=3
+  echo ""
+  echo -e "  ${D}Note: Bitwarden SSH agent uses a Windows named pipe and${N}"
+  echo -e "  ${D}cannot be mounted into a Docker container — not offered here.${N}"
+fi
 echo ""
-read -rp "  Choice [1]: " AGENT_CHOICE
-AGENT_CHOICE="${AGENT_CHOICE:-1}"
+read -rp "  Choice [${DEFAULT_CHOICE}]: " AGENT_CHOICE
+AGENT_CHOICE="${AGENT_CHOICE:-$DEFAULT_CHOICE}"
+
+# Map number → name (depends on platform because Bitwarden is hidden on Windows)
+if [ "$PLATFORM" != "windows" ]; then
+  case "$AGENT_CHOICE" in
+    1) AGENT_CHOICE_NAME="1password" ;;
+    2) AGENT_CHOICE_NAME="bitwarden" ;;
+    3) AGENT_CHOICE_NAME="custom" ;;
+    4) AGENT_CHOICE_NAME="none" ;;
+    *) AGENT_CHOICE_NAME="none" ;;
+  esac
+else
+  case "$AGENT_CHOICE" in
+    1) AGENT_CHOICE_NAME="1password" ;;
+    2) AGENT_CHOICE_NAME="custom" ;;
+    3) AGENT_CHOICE_NAME="none" ;;
+    *) AGENT_CHOICE_NAME="none" ;;
+  esac
+fi
 
 SSH_SOCK=""
 AGENT_PROVIDER="none"
 
-case "$AGENT_CHOICE" in
-  1)
+case "$AGENT_CHOICE_NAME" in
+  1password)
     AGENT_PROVIDER="1password"
     echo ""
     echo -e "  ${D}Make sure SSH agent is enabled in 1Password:${N}"
@@ -220,36 +248,43 @@ case "$AGENT_CHOICE" in
     SSH_SOCK="${SSH_SOCK_INPUT:-$SSH_SOCK_DEFAULT}"
 
     ;;
-  2)
-    AGENT_PROVIDER="keeper"
+  bitwarden)
+    AGENT_PROVIDER="bitwarden"
     echo ""
-    echo -e "  ${D}Keeper PAM uses email-based socket: ~/.keeper/<email>.ssh_agent${N}"
-    echo -e "  ${D}Prerequisites:${N}"
-    echo -e "  ${D}  1. Install Keeper Commander CLI: pip install keepercommander${N}"
-    echo -e "  ${D}  2. Start the agent: keeper ssh-agent start${N}"
-    echo -e "  ${D}  3. The agent loads SSH keys from your Keeper Vault automatically${N}"
-    echo -e "  ${D}  Docs: https://docs.keeper.io/en/keeperpam/commander-cli/command-reference/connection-commands/ssh-agent${N}"
+    echo -e "  ${D}Bitwarden SSH agent requires Bitwarden Desktop 2025.1.2+${N}"
+    echo -e "  ${D}Enable it: Bitwarden -> Settings -> Apps -> 'Use SSH Agent'${N}"
+    echo -e "  ${D}Docs: https://bitwarden.com/help/ssh-agent/${N}"
     echo ""
-    read -rp "  Your Keeper account email: " KEEPER_EMAIL
-    if [ -n "$KEEPER_EMAIL" ]; then
-      SSH_SOCK_DEFAULT="$HOME/.keeper/${KEEPER_EMAIL}.ssh_agent"
-    else
-      SSH_SOCK_DEFAULT=""
-    fi
+    SSH_SOCK_DEFAULT=""
+    case "$PLATFORM" in
+      macos)
+        # .dmg install (default) places socket in $HOME
+        SSH_SOCK_DEFAULT="$HOME/.bitwarden-ssh-agent.sock"
+        # App Store install uses sandboxed path — auto-detect if .dmg path is missing
+        SSH_SOCK_APPSTORE="$HOME/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock"
+        if [ ! -e "$SSH_SOCK_DEFAULT" ] && [ -e "$SSH_SOCK_APPSTORE" ]; then
+          SSH_SOCK_DEFAULT="$SSH_SOCK_APPSTORE"
+          echo -e "  ${D}Detected App Store installation — using sandboxed socket path.${N}"
+        fi
+        ;;
+      linux)
+        SSH_SOCK_DEFAULT="$HOME/.bitwarden-ssh-agent.sock"
+        ;;
+    esac
     if [ -n "$SSH_SOCK_DEFAULT" ] && [ -e "$SSH_SOCK_DEFAULT" ]; then
       echo -e "  ${G}Socket found at default path.${N}"
-    elif [ -n "$SSH_SOCK_DEFAULT" ]; then
-      echo -e "  ${Y}Socket not found — have you run 'keeper ssh-agent start'?${N}"
+    else
+      echo -e "  ${Y}Socket not found — is Bitwarden running with SSH agent enabled?${N}"
     fi
-    read -rp "  Keeper socket [$SSH_SOCK_DEFAULT]: " SSH_SOCK_INPUT
+    read -rp "  Bitwarden socket [$SSH_SOCK_DEFAULT]: " SSH_SOCK_INPUT
     SSH_SOCK="${SSH_SOCK_INPUT:-$SSH_SOCK_DEFAULT}"
     ;;
-  3)
+  custom)
     AGENT_PROVIDER="custom"
     echo ""
     read -rp "  SSH agent socket path: " SSH_SOCK
     ;;
-  4)
+  none)
     AGENT_PROVIDER="none"
     SSH_SOCK=""
     echo -e "  ${Y}Skipping SSH agent setup.${N}"

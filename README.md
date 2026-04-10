@@ -81,7 +81,7 @@ Each project has its own Docker volume (`claude-state`) where Claude stores memo
                    +------------------+
                             |
                      SSH agent socket
-                     (1Password / Keeper / custom)
+                     (1Password / Bitwarden / custom)
 ```
 
 Two Docker networks. The workspace container has **zero direct internet access** - every outbound request must pass through the Squid proxy, which enforces a domain allowlist (~25 domains). Anything not on the list is dropped.
@@ -296,7 +296,7 @@ Set `ANTHROPIC_API_KEY` in `.env`. The key is injected as an environment variabl
 
 The container mounts your SSH agent socket so your private keys are never exposed. Private keys stay in your password manager on the host - only the agent socket is forwarded into the container. The `setup.sh` wizard asks which provider you use.
 
-The main reason to use 1Password or Keeper as your SSH agent: **biometric authentication (Touch ID / Windows Hello)**. When Claude Code pushes to GitHub or connects to a server via SSH, your password manager prompts for Touch ID on the host. The container never sees your private keys.
+The main reason to use 1Password or Bitwarden as your SSH agent: **biometric authentication (Touch ID / Windows Hello)**. When Claude Code pushes to GitHub or connects to a server via SSH, your password manager prompts for Touch ID on the host. The container never sees your private keys.
 
 ### 1Password
 
@@ -313,19 +313,24 @@ The most common setup. 1Password's SSH agent socket is mounted directly into the
 - (Recommended) Enable "Ask approval for each new application" for biometric prompts on key use
 - Windows: Docker Desktop → Settings → Resources → WSL Integration enabled
 
-### Keeper PAM
+### Bitwarden
 
-Keeper Commander CLI exposes an SSH agent via email-based socket naming.
+Bitwarden Desktop (open-source) ships a native SSH agent since version 2025.1.2. Enable it under **Settings → Apps → "Use SSH Agent"** in the desktop app, then restart Bitwarden.
 
 | Platform | Socket path |
 |---|---|
-| macOS/Linux | `~/.keeper/<your-email>.ssh_agent` |
-| Windows | Not currently supported for Docker socket mounting |
+| macOS (.dmg) | `~/.bitwarden-ssh-agent.sock` |
+| macOS (App Store) | `~/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock` |
+| Linux (deb/rpm) | `~/.bitwarden-ssh-agent.sock` |
+| Linux (Snap) | `~/snap/bitwarden/current/.bitwarden-ssh-agent.sock` |
+| Linux (Flatpak) | `~/.var/app/com.bitwarden.desktop/data/.bitwarden-ssh-agent.sock` |
+| Windows | Not supported — Bitwarden uses a Windows named pipe, which cannot be mounted into a Docker container |
 
 **Prerequisites:**
-- Keeper Commander CLI installed
-- Start the agent: `keeper ssh-agent start`
-- Docs: https://docs.keeper.io/en/keeperpam/commander-cli/command-reference/connection-commands/ssh-agent
+- Bitwarden Desktop 2025.1.2 or newer
+- Settings → Apps → **"Use SSH Agent"** enabled
+- Restart Bitwarden Desktop after enabling
+- Docs: https://bitwarden.com/help/ssh-agent/
 
 ### Custom / Other
 
@@ -341,7 +346,7 @@ If you skip the SSH agent, key-based git operations (push, pull over SSH) won't 
 |---|---|---|---|
 | Docker runtime | OrbStack (recommended) or Docker Desktop | Docker Desktop (WSL2 backend) | Docker Engine |
 | Apple Silicon | Native arm64 (no emulation) | N/A | N/A |
-| SSH socket | 1Password / Keeper native path | Docker Desktop forwarded socket | `SSH_AUTH_SOCK` |
+| SSH socket | 1Password / Bitwarden native path | 1Password (Docker Desktop forwarded) | 1Password / Bitwarden / `SSH_AUTH_SOCK` |
 | Resources | Configurable in `.env` | Configurable in `.env` | Configurable in `.env` |
 | Setup | `./setup.sh <path>` | `bash setup.sh <path>` (Git Bash or WSL) | `./setup.sh <path>` |
 
@@ -351,6 +356,47 @@ The `setup.sh` wizard scaffolds a project folder, auto-detects your platform, an
 - **Always use a WSL terminal** - run `setup.sh`, `code`, and all commands from WSL (not PowerShell, CMD, or Git Bash). Mixing Windows and WSL filesystems causes path and performance issues
 - Docker Desktop must be running with WSL2 backend
 - For 1Password SSH agent forwarding, enable WSL Integration in Docker Desktop settings
+
+## Remote / Centralized Server Use
+
+You can run the sandbox on a headless Linux server and connect to it from VS Code on your laptop via Remote-SSH. The dev container is created and run **on the server**, not on your laptop. Useful when you want one beefy machine to host multiple project sandboxes.
+
+**Flow:**
+
+1. SSH into the server, clone the template, and run `./setup.sh ~/my-project` **on the server**.
+2. On your laptop, install the **Remote-SSH** VS Code extension and connect to the server.
+3. In VS Code (now connected to the server), open the project folder and choose **"Dev Containers: Reopen in Container"**.
+
+**Important caveats** — everything Docker mounts lives on the **server**, not your laptop:
+
+- `~/.claude/` must exist on the server. Run `claude login` on the **server** (or set `ANTHROPIC_API_KEY` in `.env` on the server).
+- `~/.ssh/` is read from the server. Put your keys there or use SSH agent forwarding from your laptop (see below).
+- The SSH agent socket path in `.env` must point to a socket that exists **on the server**. The wizard auto-detects platform — if you run `setup.sh` on the server it offers Linux defaults.
+- The proxy allowlist is per-project on the server. Each project still gets its own containers (`<name>-workspace`, `<name>-proxy`), so multiple projects can run side by side.
+
+**SSH agent forwarding from your laptop** (optional, advanced): If you want your laptop's 1Password / Bitwarden agent to authenticate from inside the server-hosted container, enable `ForwardAgent yes` in your laptop's `~/.ssh/config`, then point `SSH_AGENT_SOCK_HOST` in the server-side `.env` to `$SSH_AUTH_SOCK` of your SSH session on the server. This adds complexity and is out of scope for the wizard — configure manually if you need it.
+
+## Without VS Code (plain docker compose)
+
+You don't need VS Code or the Dev Containers extension to use this template. The actual infrastructure is `docker-compose.yml`; the `.devcontainer/` directory is just glue for VS Code's lifecycle hooks.
+
+**Flow:**
+
+```bash
+cd ~/my-project
+bash scripts/preflight.sh                                            # validates .env, Docker, container name conflicts
+docker compose up -d                                                 # starts proxy + workspace
+docker exec -it <name>-workspace bash /scripts/setup-container.sh    # one-time init: git config, MCP, auth check
+docker exec -it <name>-workspace bash                                # drop into the workspace
+# inside the container:
+ccd
+```
+
+Subsequent starts only need `docker compose up -d` and `docker exec`. The one-time `setup-container.sh` invocation runs git config, creates the MCP config, and verifies Claude auth — VS Code normally runs it via `postCreateCommand`.
+
+What you lose vs the VS Code flow: the welcome banner and editor extensions. Everything else (proxy isolation, Claude memory persistence, SSH agent mount, aliases, watchdog) works identically.
+
+Useful for: minimalist tmux/neovim workflows, headless servers (combine with the section above), CI-like ad-hoc agent runs.
 
 ## Troubleshooting
 
@@ -452,6 +498,10 @@ claude-code-sandbox/
 ├── update.sh                   # Sync latest template into existing projects
 └── README.md
 ```
+
+## Further reading
+
+- [Claude Code Sandbox: Secure Devcontainer for Claude CLI](https://sabrnet.wzk.cz/2026/04/claude-code-sandbox-secure-devcontainer-for-claude-cli/) — write-up explaining the design rationale, the threat model, and the day-to-day workflow.
 
 ## License
 

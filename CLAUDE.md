@@ -20,7 +20,7 @@ Host machine
         ├── <name>-workspace (internal network, no internet)
         │     ├── Claude CLI (ccd = dangerous mode)
         │     ├── Playwright MCP (headless Chromium)
-        │     ├── SSH agent socket (1Password / Keeper / custom)
+        │     ├── SSH agent socket (1Password / Bitwarden / custom)
         │     └── /workspace ← shared folder from host
         └── <name>-proxy (Squid, allowlist-only)
               └── proxy/allowed-domains.txt
@@ -106,7 +106,7 @@ The `welcome.sh` banner shows auth status on every container start. If it shows 
 
 Three providers supported via `setup.sh`:
 1. **1Password** — native socket per platform
-2. **Keeper PAM** — email-based socket (`~/.keeper/<email>.ssh_agent`)
+2. **Bitwarden** — native socket (`~/.bitwarden-ssh-agent.sock` on macOS .dmg / Linux; sandboxed path on macOS App Store). Hidden on Windows because Bitwarden uses a named pipe there, which Docker can't mount.
 3. **Custom** — any Unix socket path
 
 The socket is mounted to `/home/vscode/.ssh-agent/agent.sock` inside the container regardless of provider. This is a separate directory from `.ssh` (which is mounted read-only from the host) to avoid mount conflicts.
