@@ -6,6 +6,16 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 DOMAINS_FILE="$SCRIPT_DIR/proxy/allowed-domains.txt"
 
+# Detect docker compose variant (v2 plugin vs standalone docker-compose)
+if docker compose version >/dev/null 2>&1; then
+  DC="docker compose"
+elif command -v docker-compose >/dev/null 2>&1; then
+  DC="docker-compose"
+else
+  echo "ERROR: neither 'docker compose' nor 'docker-compose' found" >&2
+  exit 1
+fi
+
 usage() {
   cat <<EOF
 Usage: $(basename "$0") <command> [args]
@@ -29,7 +39,7 @@ EOF
 
 reload_proxy() {
   echo "Reloading proxy..."
-  docker compose -f "$SCRIPT_DIR/docker-compose.yml" restart proxy
+  $DC -f "$SCRIPT_DIR/docker-compose.yml" restart proxy
   echo "Proxy reloaded"
 }
 
@@ -71,12 +81,12 @@ case "${1:-}" in
     [[ -z "${2:-}" ]] && { echo "Error: specify a URL, e.g.: test https://api.anthropic.com"; exit 1; }
     url="$2"
     echo "Testing: $url (through proxy)"
-    docker compose -f "$SCRIPT_DIR/docker-compose.yml" exec claude \
+    $DC -f "$SCRIPT_DIR/docker-compose.yml" exec claude \
       curl -s -o /dev/null -w "HTTP %{http_code} (%{time_total}s)\n" \
       --proxy http://proxy:3128 "$url" || echo "Connection failed"
     ;;
   logs)
-    docker compose -f "$SCRIPT_DIR/docker-compose.yml" logs -f proxy
+    $DC -f "$SCRIPT_DIR/docker-compose.yml" logs -f proxy
     ;;
   reload)
     reload_proxy

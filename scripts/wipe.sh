@@ -16,6 +16,16 @@ N="\033[0m"
 
 cd "$(dirname "$0")/.." || exit 1
 
+# Detect docker compose variant (v2 plugin vs standalone docker-compose)
+if docker compose version >/dev/null 2>&1; then
+  DC="docker compose"
+elif command -v docker-compose >/dev/null 2>&1; then
+  DC="docker-compose"
+else
+  echo "ERROR: neither 'docker compose' nor 'docker-compose' found" >&2
+  exit 1
+fi
+
 echo -e "${B}=== Claude Code Sandbox - Wipe Tool ===${N}"
 echo ""
 
@@ -46,13 +56,13 @@ if [ "$MODE" = "--soft" ]; then
   echo -e "${G}>>> Soft reset${N}"
   echo "Cleaning container sessions and temp files..."
 
-  docker compose exec claude bash -c "rm -rf /home/vscode/.claude/sessions/* /home/vscode/.claude/projects/*/sessions/* 2>/dev/null; rm -rf /home/vscode/.claude/history.jsonl 2>/dev/null" || true
+  $DC exec claude bash -c "rm -rf /home/vscode/.claude/sessions/* /home/vscode/.claude/projects/*/sessions/* 2>/dev/null; rm -rf /home/vscode/.claude/history.jsonl 2>/dev/null" || true
   echo "  Claude sessions:  cleared"
 
-  docker compose exec claude rm -f /home/vscode/.claude.json 2>/dev/null || true
+  $DC exec claude rm -f /home/vscode/.claude.json 2>/dev/null || true
   echo "  MCP config:       cleared"
 
-  docker compose exec claude bash -c "rm -rf /tmp/* 2>/dev/null" || true
+  $DC exec claude bash -c "rm -rf /tmp/* 2>/dev/null" || true
   echo "  Container /tmp:   cleared"
 
   echo ""
@@ -77,7 +87,7 @@ elif [ "$MODE" = "--hard" ]; then
   read -rp "Type 'wipe' to confirm: " CONFIRM
   [ "$CONFIRM" != "wipe" ] && echo "Cancelled." && exit 0
 
-  docker compose down -v --rmi local 2>/dev/null
+  $DC down -v --rmi local 2>/dev/null
   echo "  Containers + volumes + images: destroyed"
   echo -e "  ${R}claude-state volume: DESTROYED (memory, sessions, project data gone)${N}"
 
