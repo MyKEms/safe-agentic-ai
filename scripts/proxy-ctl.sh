@@ -66,9 +66,9 @@ _add_entry() {
   if grep -qxF "$entry" "$file" 2>/dev/null; then
     echo "Already active: $entry ($label)"
     return 1
-  elif grep -qF "$entry" "$file" 2>/dev/null; then
-    # Entry exists but is commented out — uncomment it
-    sed -i.bak "s|^#[[:space:]]*${entry}$|${entry}|" "$file" && rm -f "$file.bak"
+  elif grep -qxF "# ${entry}" "$file" 2>/dev/null; then
+    # Entry exists commented out as exactly "# <entry>" — uncomment it
+    sed -i.bak "s|^# ${entry}$|${entry}|" "$file" && rm -f "$file.bak"
     echo "Uncommented: $entry ($label)"
   else
     echo "$entry" >> "$file"
